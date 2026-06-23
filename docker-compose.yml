@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+
+  client-agent:
+    build: ./client-agent
+    ports:
+      - "8000:8000"
+
+  worker-agent:
+    build: ./worker-agent
+    ports:
+      - "8001:8001"
+
+  verifier-agent:
+    build: ./verifier-agent
+    ports:
+      - "8002:8002"
+
+  escrow-service:
+    build: ./escrow-service
+    ports:
+      - "8003:8003"
