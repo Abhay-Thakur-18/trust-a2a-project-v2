@@ -2,86 +2,96 @@
 
 ## Overview
 
-This project demonstrates a trust-based multi-agent collaboration system inspired by Google's Agent-to-Agent (A2A) protocol.
+This project implements a **multi-agent distributed system** inspired by Google's Agent-to-Agent (A2A) protocol.
 
-The system contains four independent services:
+It demonstrates how independent AI agents collaborate to complete tasks in a secure and trust-based environment where:
 
-* Client Agent
-* Worker Agent
-* Verifier Agent
-* Escrow Service
-
-The main objective is to ensure that payment is released only after successful verification of work.
+👉 Work is verified before payment is released.
 
 ---
 
-## Architecture
+## Problem Statement
 
-Client Agent → Worker Agent → Verifier Agent → Escrow Service
+In real-world AI systems:
 
-1. Client creates a task and reward.
-2. Escrow locks the reward.
-3. Worker completes the task.
-4. Verifier evaluates the result.
-5. Escrow releases payment if verification succeeds.
-6. Reputation is updated after each task.
+- Agents may produce incorrect or low-quality outputs
+- There is no trust guarantee between systems
+- Payments or rewards should not be released blindly
+
+This project solves this problem using:
+
+✔ Verification Layer  
+✔ Escrow-Based Payment System  
+✔ Reputation Tracking  
+
+---
+
+## System Architecture
+
+- Client Agent
+- Worker Agent
+- Verifier Agent
+- Escrow Service
+
+---
+
+## Workflow
+
+1. Client Agent creates a task with reward  
+2. Escrow Service locks the funds  
+3. Worker Agent executes the task  
+4. Worker returns generated output  
+5. Verifier Agent validates the output  
+6. Escrow Service releases payment if verified  
+7. Reputation system is updated  
 
 ---
 
 ## Technologies Used
 
-* Python
-* FastAPI
-* Docker
-* Docker Compose
+- Python 3.11
+- FastAPI
+- Docker
+- Docker Compose
+- REST APIs
 
 ---
 
-## Services
+## Services Description
 
-### Client Agent
-
-Port: 8000
-
-Responsibilities:
-
-* Create tasks
-* Discover agents
-* Manage workflow
-
-### Worker Agent
-
-Port: 8001
-
-Responsibilities:
-
-* Accept tasks
-* Generate results
-
-### Verifier Agent
-
-Port: 8002
-
-Responsibilities:
-
-* Verify work
-* Calculate score
-* Update reputation
-
-### Escrow Service
-
-Port: 8003
-
-Responsibilities:
-
-* Lock funds
-* Release payment after verification
+### Client Agent (Port: 8000)
+- Task creation
+- Agent discovery
+- Workflow initiation
+- Reputation check
 
 ---
 
-## Running the Project
+### Worker Agent (Port: 8001)
+- Accept task requests
+- Generate AI-based output
+- Return processed result
 
-```bash
+---
+
+### Verifier Agent (Port: 8002)
+- Validate generated output
+- Check required sections
+- Assign verification score
+- Update reputation system
+
+---
+
+### Escrow Service (Port: 8003)
+- Lock reward funds
+- Release payment after verification
+- Maintain transaction history
+
+---
+
+## How to Run the Project
+
+```bash id="run_fixed"
 docker-compose up --build
 ```
 
@@ -92,9 +102,10 @@ docker-compose up --build
 POST /create-task
 
 ```json
+POST /create-task
 {
-  "task": "Generate AI market report",
-  "reward": 100
+  "task": "Generate AI Healthcare Report",
+  "reward": 500
 }
 ```
 
@@ -105,12 +116,35 @@ POST /create-task
 ```json
 {
   "success": true,
+  "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
+  "worker": {
+    "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
+    "result": "# AI Healthcare Report\n\n## Executive Summary\nThis report provides an overview of AI Healthcare Report and highlights its current state.\n\n## Market Overview\nThe market is growing rapidly due to AI adoption.\n\n## Conclusion\nAI Healthcare Report is expected to grow significantly.",
+    "agent_id": "worker-agent"
+  },
   "verification": {
+    "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
     "verified": true,
-    "score": 80
+    "score": 100,
+    "checks": {
+      "minimum_length": true,
+      "executive_summary": true,
+      "market_overview": true,
+      "conclusion": true,
+      "references": true
+    }
   },
   "payment": {
-    "status": "payment_released"
+    "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
+    "reward": 500,
+    "status": "payment_released",
+    "transaction": {
+      "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
+      "payer": "client-agent",
+      "payee": "worker-agent",
+      "amount": 500,
+      "status": "success"
+    }
   }
 }
 ```
@@ -119,12 +153,12 @@ POST /create-task
 
 ## Features
 
-* Multi-Agent Collaboration
-* Agent Discovery
-* Verification-Based Payment
-* Reputation Tracking
-* Dockerized Microservices
-* Mock Settlement Layer
+* Multi-agent distributed system
+* A2A communication flow
+* Trust-based verification system
+* Escrow-based payment simulation
+* Reputation tracking system
+* Dockerized microservices architecture
 
 ---
 

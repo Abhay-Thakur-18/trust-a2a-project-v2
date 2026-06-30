@@ -29,17 +29,42 @@ def home():
 @app.post("/verify")
 def verify(data: VerifyRequest):
 
-    # 🔥 better scoring logic
-    score = min(100, len(data.result) * 2)
-    verified = score >= 60
+    report = data.result
 
-    # 🔥 dynamic reputation update
+    score = 0
+
+    # Minimum Length
+    if len(report) >= 500:
+        score += 20
+
+    # Required Sections
+    if "Executive Summary" in report:
+        score += 20
+
+    if "Market Overview" in report:
+        score += 20
+
+    if "Conclusion" in report:
+        score += 20
+
+    if "References" in report:
+        score += 20
+
+    verified = score >= 80
+
     update_reputation(data.agent_id, verified)
 
     return {
         "task_id": data.task_id,
         "verified": verified,
-        "score": score
+        "score": score,
+        "checks": {
+            "minimum_length": len(report) >= 500,
+            "executive_summary": "Executive Summary" in report,
+            "market_overview": "Market Overview" in report,
+            "conclusion": "Conclusion" in report,
+            "references": "References" in report
+        }
     }
 
 

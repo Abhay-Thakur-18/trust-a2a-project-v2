@@ -7,6 +7,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from crypto_utils import verify_message
+from report_generator import generate_report
 
 app = FastAPI(title="Worker Agent")
 
@@ -41,13 +42,19 @@ def accept_task(data: dict):
     )
 
     if not valid:
-        return {"error": "Invalid signature"}
+        return {
+            "error": "Invalid signature"
+        }
+
+    # Generate professional report
+    report = generate_report(data["task"])
 
     return {
         "task_id": data["task_id"],
-        "result": f"Task received: {data['task']}",
+        "result": report,
         "agent_id": "worker-agent"
     }
+
 
 @app.get("/.well-known/agent.json")
 def agent_card():
