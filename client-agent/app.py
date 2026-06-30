@@ -15,6 +15,13 @@ app = FastAPI(title="Client Agent")
 
 PRIVATE_KEY, PUBLIC_KEY = generate_keys()
 
+# ----------------------------
+# Docker Service URLs (FIXED)
+# ----------------------------
+WORKER_URL = "http://worker-agent:8001"
+VERIFIER_URL = "http://verifier-agent:8002"
+ESCROW_URL = "http://escrow-service:8003"
+
 
 class TaskRequest(BaseModel):
     task: str
@@ -30,89 +37,99 @@ def home():
 
 
 # ----------------------------
-# MAIN WORKFLOW (FIXED)
+# MAIN WORKFLOW (FIXED + SAFE)
 # ----------------------------
 @app.post("/create-task")
 def create_task(data: TaskRequest):
 
     task_id = str(uuid.uuid4())
 
-    # -------------------------
-    # 1. LOCK FUNDS (IMPORTANT FIX)
-    # -------------------------
-    escrow_lock = requests.post(
-        "http://localhost:8003/lock-funds",
-        json={
+    try:
+        # -------------------------
+        # 1. LOCK FUNDS
+        # -------------------------
+        escrow_lock = requests.post(
+            f"{ESCROW_URL}/lock-funds",
+            json={
+                "task_id": task_id,
+                "reward": data.reward
+            },
+            timeout=5
+        )
+
+        lock_result = escrow_lock.json()
+
+        if lock_result.get("status") != "funds_locked":
+            return {
+                "success": False,
+                "error": "Escrow lock failed",
+                "details": lock_result
+            }
+
+        # -------------------------
+        # 2. SEND TO WORKER
+        # -------------------------
+        payload = {
             "task_id": task_id,
-            "reward": data.reward
+            "task": data.task
         }
-    )
 
-    lock_result = escrow_lock.json()
+        message = json.dumps(payload, sort_keys=True)
+        signature = sign_message(PRIVATE_KEY, message)
 
-    # ❗ STOP if escrow failed
-    if lock_result.get("status") != "funds_locked":
+        worker_response = requests.post(
+            f"{WORKER_URL}/accept-task",
+            json={
+                "task_id": task_id,
+                "task": data.task,
+                "signature": signature,
+                "public_key": PUBLIC_KEY
+            },
+            timeout=5
+        )
+
+        worker_result = worker_response.json()
+
+        # -------------------------
+        # 3. VERIFY RESULT
+        # -------------------------
+        verifier_response = requests.post(
+            f"{VERIFIER_URL}/verify",
+            json={
+                "task_id": task_id,
+                "result": worker_result.get("result", "")
+            },
+            timeout=5
+        )
+
+        verification = verifier_response.json()
+
+        # -------------------------
+        # 4. RELEASE PAYMENT
+        # -------------------------
+        payment_response = requests.post(
+            f"{ESCROW_URL}/release-funds",
+            json={
+                "task_id": task_id,
+                "reward": data.reward,
+                "verified": verification.get("verified", False)
+            },
+            timeout=5
+        )
+
+        return {
+            "success": True,
+            "task_id": task_id,
+            "worker": worker_result,
+            "verification": verification,
+            "payment": payment_response.json()
+        }
+
+    except Exception as e:
         return {
             "success": False,
-            "error": "Escrow lock failed",
-            "details": lock_result
+            "error": str(e)
         }
-
-    # -------------------------
-    # 2. SEND TO WORKER
-    # -------------------------
-    payload = {
-        "task_id": task_id,
-        "task": data.task
-    }
-
-    message = json.dumps(payload, sort_keys=True)
-    signature = sign_message(PRIVATE_KEY, message)
-
-    worker_response = requests.post(
-        "http://localhost:8001/accept-task",
-        json={
-            "task_id": task_id,
-            "task": data.task,
-            "signature": signature,
-            "public_key": PUBLIC_KEY
-        }
-    )
-
-    worker_result = worker_response.json()
-
-    # -------------------------
-    # 3. VERIFY RESULT
-    # -------------------------
-    verifier_response = requests.post(
-        "http://localhost:8002/verify",
-        json={
-            "task_id": task_id,
-            "result": worker_result.get("result", "")
-        }
-    )
-
-    verification = verifier_response.json()
-
-    # -------------------------
-    # 4. RELEASE PAYMENT (FIXED)
-    # -------------------------
-    payment_response = requests.post(
-        "http://localhost:8003/release-funds",
-        json={
-            "task_id": task_id,
-            "reward": data.reward,
-            "verified": verification.get("verified", False)
-        }
-    )
-
-    return {
-        "success": True,
-        "task_id": task_id,
-        "worker": worker_result,
-        "verification": verification,
-        "payment": payment_response.json()
-    }
 
 
 # ----------------------------
@@ -129,7 +146,7 @@ def agent_card():
 
 
 # ----------------------------
-# DISCOVERY SYSTEM
+# DISCOVERY SYSTEM (FIXED)
 # ----------------------------
 @app.get("/discover-agents")
 def discover_agents():
@@ -137,9 +154,9 @@ def discover_agents():
     agents = []
 
     urls = [
-        "http://localhost:8001/.well-known/agent.json",
-        "http://localhost:8002/.well-known/agent.json",
-        "http://localhost:8003/.well-known/agent.json"
+        f"{WORKER_URL}/.well-known/agent.json",
+        f"{VERIFIER_URL}/.well-known/agent.json",
+        f"{ESCROW_URL}/.well-known/agent.json"
     ]
 
     for url in urls:
