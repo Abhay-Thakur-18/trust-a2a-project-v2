@@ -11,11 +11,15 @@ services:
     build: ./worker-agent
     ports:
       - "8001:8001"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
 
   verifier-agent:
     build: ./verifier-agent
     ports:
       - "8002:8002"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
 
   escrow-service:
     build: ./escrow-service

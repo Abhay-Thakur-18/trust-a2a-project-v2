@@ -7,7 +7,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from crypto_utils import verify_message
-from report_generator import generate_report
+from gemini_service import generate_report
 
 app = FastAPI(title="Worker Agent")
 

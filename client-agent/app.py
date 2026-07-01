@@ -54,7 +54,7 @@ def create_task(data: TaskRequest):
                 "task_id": task_id,
                 "reward": data.reward
             },
-            timeout=5
+            timeout=60
         )
 
         lock_result = escrow_lock.json()
@@ -85,7 +85,7 @@ def create_task(data: TaskRequest):
                 "signature": signature,
                 "public_key": PUBLIC_KEY
             },
-            timeout=5
+            timeout=60
         )
 
         worker_result = worker_response.json()
@@ -99,7 +99,7 @@ def create_task(data: TaskRequest):
                 "task_id": task_id,
                 "result": worker_result.get("result", "")
             },
-            timeout=5
+            timeout=60
         )
 
         verification = verifier_response.json()
@@ -114,7 +114,7 @@ def create_task(data: TaskRequest):
                 "reward": data.reward,
                 "verified": verification.get("verified", False)
             },
-            timeout=5
+            timeout=60
         )
 
         return {

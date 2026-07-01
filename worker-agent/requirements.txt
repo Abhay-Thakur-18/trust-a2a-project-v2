@@ -1,3 +1,7 @@
 fastapi
 uvicorn
 pydantic
+requests
+pynacl
+google-genai
+python-dotenv
