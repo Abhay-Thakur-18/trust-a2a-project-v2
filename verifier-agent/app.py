@@ -3,12 +3,17 @@ from pydantic import BaseModel
 import sys
 import os
 
-# safer import
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(BASE_DIR)
 
-from reputation import update_reputation
+from shared.database import (
+    get_connection,
+    initialize_database,
+    update_reputation,
+)
 from gemini_judge import evaluate_report
+
+initialize_database()
 
 app = FastAPI(title="Verifier Agent")
 
@@ -47,10 +52,6 @@ def verify(data: VerifyRequest):
         print("Gemini Judge Failed:", str(e))
         print("Using Rule-Based Verification...")
 
-        # ==========================
-        # Fallback Rule-Based Verification
-        # ==========================
-
         score = 0
 
         checks = {
@@ -77,13 +78,59 @@ def verify(data: VerifyRequest):
             score += 20
 
         verified = score >= 80
-
         feedback = "Fallback rule-based verification used."
 
-    # ==========================
-    # Reputation Update
-    # ==========================
+    print("\n========== VERIFIER ==========")
+    print("Task ID :", data.task_id)
+    print("Verified :", verified)
+    print("Score :", score)
 
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # ==========================
+    # Save verification history
+    # ==========================
+    cur.execute("""
+        INSERT INTO verifications
+        (task_id, verified, score, feedback)
+        VALUES (%s, %s, %s, %s)
+    """, (
+        data.task_id,
+        verified,
+        score,
+        feedback
+    ))
+
+    # ==========================
+    # Update task
+    # ==========================
+    cur.execute("""
+        UPDATE tasks
+        SET
+            status=%s,
+            verification_score=%s,
+            verification_feedback=%s
+        WHERE task_id=%s
+    """, (
+        "verified",
+        score,
+        feedback,
+        data.task_id
+    ))
+
+    print("Task Rows Updated :", cur.rowcount)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    print("Verification Saved Successfully")
+    print("===============================\n")
+
+    # ==========================
+    # Update Reputation
+    # ==========================
     update_reputation(data.agent_id, verified)
 
     return {

@@ -1,37 +1,16 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import time
+from shared.database import get_connection
+from shared.database import initialize_database
+initialize_database()
 
 app = FastAPI(title="Escrow Service")
-
-# -------------------------
-# STORAGE
-# -------------------------
-escrow_db = {}
-transaction_log = []
 
 
 class PaymentRequest(BaseModel):
     task_id: str
     reward: int
-
-
-# -------------------------
-# MOCK SETTLEMENT FUNCTION
-# -------------------------
-def release_payment(payer: str, payee: str, amount: int, task_id: str):
-
-    tx = {
-        "task_id": task_id,
-        "payer": payer,
-        "payee": payee,
-        "amount": amount,
-        "status": "success",
-        "timestamp": time.time()
-    }
-
-    transaction_log.append(tx)
-    return tx
 
 
 @app.get("/")
@@ -48,10 +27,24 @@ def home():
 @app.post("/lock-funds")
 def lock_funds(data: PaymentRequest):
 
-    escrow_db[data.task_id] = {
-        "reward": data.reward,
-        "status": "funds_locked"
-    }
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO transactions
+        (task_id, payer, payee, amount, status)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (
+        data.task_id,
+        "client-agent",
+        "worker-agent",
+        data.reward,
+        "locked"
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     return {
         "task_id": data.task_id,
@@ -69,57 +62,112 @@ def release_funds(data: dict):
     task_id = data.get("task_id")
     verified = data.get("verified", False)
 
-    if task_id not in escrow_db:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # check transaction
+    cur.execute("""
+        SELECT * FROM transactions
+        WHERE task_id = %s
+    """, (task_id,))
+
+    tx = cur.fetchone()
+
+    if not tx:
         return {
             "task_id": task_id,
-            "error": "escrow not found"
+            "error": "transaction not found"
         }
 
-    reward = escrow_db[task_id]["reward"]
+    reward = tx["amount"]
 
     if verified:
-        escrow_db[task_id]["status"] = "payment_released"
 
-        tx = release_payment(
-            payer="client-agent",
-            payee="worker-agent",
-            amount=reward,
-            task_id=task_id
-        )
+        cur.execute("""
+            UPDATE transactions
+            SET status = %s
+            WHERE task_id = %s
+        """, ("completed", task_id))
 
-        return {
-            "task_id": task_id,
-            "reward": reward,
-            "status": "payment_released",
-            "transaction": tx
-        }
+        cur.execute("""
+            UPDATE tasks
+            SET status = %s
+            WHERE task_id = %s
+        """, ("paid", task_id))
+
+        status = "payment_released"
 
     else:
-        escrow_db[task_id]["status"] = "payment_blocked"
 
-        return {
-            "task_id": task_id,
-            "reward": reward,
-            "status": "payment_blocked"
-        }
+        cur.execute("""
+            UPDATE transactions
+            SET status = %s
+            WHERE task_id = %s
+        """, ("blocked", task_id))
+
+        cur.execute("""
+            UPDATE tasks
+            SET status = %s
+            WHERE task_id = %s
+        """, ("failed", task_id))
+
+        status = "payment_blocked"
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {
+        "task_id": task_id,
+        "reward": reward,
+        "status": status
+    }
 
 
 # -------------------------
-# DEBUG VIEW
+# ESCROW STATUS
 # -------------------------
 @app.get("/escrow/{task_id}")
 def get_escrow(task_id: str):
-    return escrow_db.get(task_id, {"error": "not found"})
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM transactions
+        WHERE task_id = %s
+    """, (task_id,))
+
+    result = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return result if result else {"error": "not found"}
 
 
 # -------------------------
-# TRANSACTION LOG
+# TRANSACTIONS LIST
 # -------------------------
 @app.get("/transactions")
 def get_transactions():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM transactions
+        ORDER BY id DESC
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
     return {
-        "total_transactions": len(transaction_log),
-        "transactions": transaction_log
+        "total_transactions": len(rows),
+        "transactions": rows
     }
 
 

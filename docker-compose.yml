@@ -2,26 +2,68 @@ version: "3.9"
 
 services:
 
+  postgres:
+    image: postgres:16
+    container_name: trust-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: trustuser
+      POSTGRES_PASSWORD: trustpass
+      POSTGRES_DB: trustdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trustuser -d trustdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   client-agent:
-    build: ./client-agent
+    build:
+      context: .
+      dockerfile: client-agent/Dockerfile
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   worker-agent:
-    build: ./worker-agent
+    build:
+      context: .
+      dockerfile: worker-agent/Dockerfile
     ports:
       - "8001:8001"
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   verifier-agent:
-    build: ./verifier-agent
+    build:
+      context: .
+      dockerfile: verifier-agent/Dockerfile
     ports:
       - "8002:8002"
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   escrow-service:
-    build: ./escrow-service
+    build:
+      context: .
+      dockerfile: escrow-service/Dockerfile
     ports:
       - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+volumes:
+  postgres_data:

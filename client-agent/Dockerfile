@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install fastapi uvicorn requests pydantic pynacl
+RUN pip install --no-cache-dir -r client-agent/requirements.txt
+
+WORKDIR /app/client-agent
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

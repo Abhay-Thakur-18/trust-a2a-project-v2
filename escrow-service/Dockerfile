@@ -4,6 +4,10 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install fastapi uvicorn requests pydantic pynacl
+RUN pip install --no-cache-dir -r escrow-service/requirements.txt
+
+ENV PYTHONPATH=/app
+
+WORKDIR /app/escrow-service
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8003"]

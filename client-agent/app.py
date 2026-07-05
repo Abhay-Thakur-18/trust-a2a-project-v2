@@ -10,6 +10,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from crypto_utils import generate_keys, sign_message
 from reputation import get_reputation
+from shared.database import get_connection, initialize_database
+
+initialize_database()
 
 app = FastAPI(title="Client Agent")
 
@@ -43,6 +46,24 @@ def home():
 def create_task(data: TaskRequest):
 
     task_id = str(uuid.uuid4())
+
+    # Save task in PostgreSQL
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    INSERT INTO tasks (task_id, task, reward, status)
+    VALUES (%s, %s, %s, %s)
+    """, (
+        task_id,
+        data.task,
+        data.reward,
+        "created"
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     try:
         # -------------------------

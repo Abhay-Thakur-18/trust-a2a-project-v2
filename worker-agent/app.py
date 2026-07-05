@@ -8,6 +8,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from crypto_utils import verify_message
 from gemini_service import generate_report
+from shared.database import get_connection
+from shared.database import initialize_database
+
+initialize_database()
 
 app = FastAPI(title="Worker Agent")
 
@@ -46,8 +50,68 @@ def accept_task(data: dict):
             "error": "Invalid signature"
         }
 
-    # Generate professional report
+    print("\n========== WORKER START ==========")
+    print("Task ID :", data["task_id"])
+
+    # -----------------------------
+    # Update Task Status -> Processing
+    # -----------------------------
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE tasks
+        SET status=%s
+        WHERE task_id=%s
+    """, (
+        "processing",
+        data["task_id"]
+    ))
+
+    print("Processing Update Rows :", cur.rowcount)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    # -----------------------------
+    # Generate AI Report
+    # -----------------------------
     report = generate_report(data["task"])
+
+    print("Report Generated Successfully")
+    print("Report Length :", len(report))
+
+    # -----------------------------
+    # Save Worker + Report + Status
+    # -----------------------------
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE tasks
+        SET
+            status=%s,
+            worker_id=%s,
+            generated_report=%s
+        WHERE task_id=%s
+    """, (
+        "completed",
+        "worker-agent",
+        report,
+        data["task_id"]
+    ))
+
+    print("Completed Update Rows :", cur.rowcount)
+
+    conn.commit()
+
+    print("Database Commit Successful")
+
+    cur.close()
+    conn.close()
+
+    print("========== WORKER END ==========\n")
 
     return {
         "task_id": data["task_id"],
