@@ -5,3 +5,4 @@ pydantic
 psycopg2-binary
 pynacl
 python-dotenv
+google-auth
