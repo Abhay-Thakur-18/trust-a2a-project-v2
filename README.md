@@ -215,7 +215,9 @@ trust-a2a-project-v2
 
 | Method | Endpoint |
 |---------|----------|
+| GET | / |
 | POST | /verify |
+| GET | /agent-card |
 
 ---
 
