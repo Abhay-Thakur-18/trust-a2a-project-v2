@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import time
 from shared.database import get_connection
@@ -6,6 +7,14 @@ from shared.database import initialize_database
 initialize_database()
 
 app = FastAPI(title="Escrow Service")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class PaymentRequest(BaseModel):
@@ -29,6 +38,24 @@ def lock_funds(data: PaymentRequest):
 
     conn = get_connection()
     cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, status FROM transactions
+        WHERE task_id = %s
+        ORDER BY id DESC
+        LIMIT 1
+    """, (data.task_id,))
+    existing = cur.fetchone()
+
+    if existing:
+        cur.close()
+        conn.close()
+        return {
+            "task_id": data.task_id,
+            "reward": data.reward,
+            "status": "funds_locked" if existing["status"] == "locked" else existing["status"],
+            "message": "Funds already locked for this task",
+        }
 
     cur.execute("""
         INSERT INTO transactions
@@ -79,6 +106,13 @@ def release_funds(data: dict):
             "error": "transaction not found"
         }
 
+    if tx["status"] != "locked":
+        return {
+            "task_id": task_id,
+            "error": f"Cannot release funds with status '{tx['status']}'",
+            "current_status": tx["status"],
+        }
+
     reward = tx["amount"]
 
     if verified:
@@ -127,6 +161,37 @@ def release_funds(data: dict):
 # -------------------------
 # ESCROW STATUS
 # -------------------------
+@app.get("/escrow")
+def get_escrow_summary():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            COALESCE(SUM(CASE WHEN status = 'locked' THEN amount ELSE 0 END), 0) AS locked_balance,
+            COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) AS released_total,
+            COALESCE(SUM(CASE WHEN status = 'blocked' THEN amount ELSE 0 END), 0) AS blocked_total,
+            COUNT(*) AS total_transactions
+        FROM transactions
+    """)
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    locked = int(row["locked_balance"] or 0)
+    released = int(row["released_total"] or 0)
+    blocked = int(row["blocked_total"] or 0)
+
+    return {
+        "balance": locked,
+        "locked_balance": locked,
+        "released_total": released,
+        "blocked_total": blocked,
+        "total_transactions": int(row["total_transactions"] or 0),
+    }
+
+
 @app.get("/escrow/{task_id}")
 def get_escrow(task_id: str):
 
@@ -144,6 +209,9 @@ def get_escrow(task_id: str):
     conn.close()
 
     return result if result else {"error": "not found"}
+
+
+# NOTE: /escrow summary route is defined above /escrow/{task_id} to avoid route conflicts.
 
 
 # -------------------------
@@ -185,3 +253,8 @@ def agent_card():
             "payment-release"
         ]
     }
+
+
+@app.get("/agent-card")
+def agent_card_alias():
+    return agent_card()

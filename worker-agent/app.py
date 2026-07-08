@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 import sys
@@ -8,12 +9,19 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from crypto_utils import verify_message
 from gemini_service import generate_report
-from shared.database import get_connection
-from shared.database import initialize_database
+from shared.database import get_connection, initialize_database, get_reputation
 
 initialize_database()
 
 app = FastAPI(title="Worker Agent")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class TaskRequest(BaseModel):
@@ -129,4 +137,65 @@ def agent_card():
         "capabilities": [
             "task-execution"
         ]
+    }
+
+
+@app.get("/agent-card")
+def agent_card_alias():
+    return agent_card()
+
+
+@app.get("/workers")
+def list_workers():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            worker_id,
+            COUNT(*) AS tasks_total,
+            COUNT(CASE WHEN status IN ('completed', 'verified', 'paid') THEN 1 END) AS tasks_completed,
+            ROUND(AVG(verification_score)::numeric, 1) AS avg_score
+        FROM tasks
+        WHERE worker_id IS NOT NULL
+        GROUP BY worker_id
+        ORDER BY tasks_completed DESC
+    """)
+    worker_rows = cur.fetchall()
+
+    workers = []
+    for row in worker_rows:
+        rep = get_reputation(row["worker_id"])
+        workers.append({
+            **dict(row),
+            "reputation_score": rep.get("score") if rep else None,
+            "success_count": rep.get("success") if rep else 0,
+            "failure_count": rep.get("failure") if rep else 0,
+        })
+
+    cur.execute("""
+        SELECT
+            task_id,
+            task,
+            status,
+            worker_id,
+            reward,
+            verification_score,
+            verification_feedback,
+            created_at,
+            generated_report
+        FROM tasks
+        WHERE worker_id IS NOT NULL
+        ORDER BY created_at DESC
+        LIMIT 50
+    """)
+    assignments = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return {
+        "total_workers": len(workers),
+        "workers": workers,
+        "assignments": assignments,
     }

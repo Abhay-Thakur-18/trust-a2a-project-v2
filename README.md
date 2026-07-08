@@ -1,194 +1,366 @@
-# Google A2A Trust-Based Agent Collaboration System
+# Trust-Based A2A Multi-Agent Collaboration Platform
+
+A production-ready multi-agent collaboration platform built with **FastAPI, React, PostgreSQL, Docker, and Google Gemini**. The system enables secure task execution through independent verification, escrow-controlled payments, and a modular microservices architecture.
+
+---
 
 ## Overview
 
-This project implements a **multi-agent distributed system** inspired by Google's Agent-to-Agent (A2A) protocol.
+This project demonstrates a complete **Agent-to-Agent (A2A)** collaboration workflow where independent services communicate to execute, verify, and financially settle tasks in a trusted environment.
 
-It demonstrates how independent AI agents collaborate to complete tasks in a secure and trust-based environment where:
-
-👉 Work is verified before payment is released.
+Unlike a traditional task management system, this platform introduces a trust layer through verification and escrow, ensuring that payments are released only after successful validation.
 
 ---
 
-## Problem Statement
+## Dashboard Preview
 
-In real-world AI systems:
+> Replace these placeholders with actual screenshots after uploading them to the repository.
 
-- Agents may produce incorrect or low-quality outputs
-- There is no trust guarantee between systems
-- Payments or rewards should not be released blindly
-
-This project solves this problem using:
-
-✔ Verification Layer  
-✔ Escrow-Based Payment System  
-✔ Reputation Tracking  
-
----
-
-## System Architecture
-
-- Client Agent
-- Worker Agent
-- Verifier Agent
-- Escrow Service
-
----
-
-## Workflow
-
-1. Client Agent creates a task with reward  
-2. Escrow Service locks the funds  
-3. Worker Agent executes the task  
-4. Worker returns generated output  
-5. Verifier Agent validates the output  
-6. Escrow Service releases payment if verified  
-7. Reputation system is updated  
-
----
-
-## Technologies Used
-
-- Python 3.11
-- FastAPI
-- Docker
-- Docker Compose
-- REST APIs
-
----
-
-## Services Description
-
-### Client Agent (Port: 8000)
-- Task creation
-- Agent discovery
-- Workflow initiation
-- Reputation check
-
----
-
-### Worker Agent (Port: 8001)
-- Accept task requests
-- Generate AI-based output
-- Return processed result
-
----
-
-### Verifier Agent (Port: 8002)
-- Validate generated output
-- Check required sections
-- Assign verification score
-- Update reputation system
-
----
-
-### Escrow Service (Port: 8003)
-- Lock reward funds
-- Release payment after verification
-- Maintain transaction history
-
----
-
-## How to Run the Project
-
-```bash id="run_fixed"
-docker-compose up --build
+```
+docs/images/dashboard.png
+docs/images/tasks.png
+docs/images/transactions.png
+docs/images/reports.png
 ```
 
 ---
 
-## Sample Request
+## Key Features
 
-POST /create-task
+- Trust-Based Multi-Agent Architecture
+- Independent Verification Workflow
+- Escrow Payment Mechanism
+- Reputation & Trust Model
+- Google Gemini Integration
+- PostgreSQL Persistence
+- Modern React Dashboard
+- Dockerized Deployment
+- RESTful APIs
+- Modular Service Design
+- Analytics Dashboard
+- Reports & Activity Timeline
 
-```json
-POST /create-task
-{
-  "task": "Generate AI Healthcare Report",
-  "reward": 500
-}
+---
+
+# System Architecture
+
+```
+                        React Dashboard
+                               │
+                               │
+                         REST API Calls
+                               │
+                               ▼
+
+                  ┌────────────────────────┐
+                  │     Client Agent       │
+                  │        Port 8000       │
+                  └───────────┬────────────┘
+                              │
+                       Create Task
+                              │
+                              ▼
+
+                  ┌────────────────────────┐
+                  │     Worker Agent       │
+                  │        Port 8001       │
+                  └───────────┬────────────┘
+                              │
+                     Submit Completed Task
+                              │
+                              ▼
+
+                  ┌────────────────────────┐
+                  │    Verifier Agent      │
+                  │        Port 8002       │
+                  └───────────┬────────────┘
+                              │
+                     Verification Result
+                              │
+                              ▼
+
+                  ┌────────────────────────┐
+                  │    Escrow Service      │
+                  │        Port 8003       │
+                  └───────────┬────────────┘
+                              │
+                              ▼
+
+                       PostgreSQL Database
 ```
 
 ---
 
-## Sample Response
+# Workflow
 
-```json
-{
-  "success": true,
-  "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
-  "worker": {
-    "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
-    "result": "# AI Healthcare Report\n\n## Executive Summary\nThis report provides an overview of AI Healthcare Report and highlights its current state.\n\n## Market Overview\nThe market is growing rapidly due to AI adoption.\n\n## Conclusion\nAI Healthcare Report is expected to grow significantly.",
-    "agent_id": "worker-agent"
-  },
-  "verification": {
-    "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
-    "verified": true,
-    "score": 100,
-    "checks": {
-      "minimum_length": true,
-      "executive_summary": true,
-      "market_overview": true,
-      "conclusion": true,
-      "references": true
-    }
-  },
-  "payment": {
-    "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
-    "reward": 500,
-    "status": "payment_released",
-    "transaction": {
-      "task_id": "b7efb50f-6955-4ce7-8a8a-ada007e31fb6",
-      "payer": "client-agent",
-      "payee": "worker-agent",
-      "amount": 500,
-      "status": "success"
-    }
-  }
-}
+```
+Client
+
+↓
+
+Create Task
+
+↓
+
+Worker Accepts Task
+
+↓
+
+Task Execution
+
+↓
+
+Verifier Reviews Task
+
+↓
+
+Escrow Releases Payment
+
+↓
+
+Transaction Recorded
+
+↓
+
+Dashboard Updated
 ```
 
 ---
 
-## Features
+# Technology Stack
 
-* Multi-agent distributed system
-* A2A communication flow
-* Trust-based verification system
-* Escrow-based payment simulation
-* Reputation tracking system
-* Dockerized microservices architecture
+| Layer | Technology |
+|--------|------------|
+| Frontend | React 19 |
+| Build Tool | Vite |
+| Styling | Tailwind CSS v4 |
+| UI Components | Shadcn UI |
+| Charts | Recharts |
+| Backend | FastAPI |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy |
+| Validation | Pydantic |
+| AI Integration | Google Gemini |
+| Authentication | Google OAuth |
+| API | REST |
+| Containerization | Docker |
+| Version Control | Git |
 
 ---
 
-## Future Improvements
+# Project Structure
 
-* Full Ed25519 Signature Enforcement
-* Multi-Worker Selection
-* Cloud Deployment
-* Dashboard UI
+```text
+trust-a2a-project-v2
+│
+├── client-agent/
+│
+├── worker-agent/
+│
+├── verifier-agent/
+│
+├── escrow-service/
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+├── docker-compose.yml
+│
+├── requirements.txt
+│
+└── README.md
+```
 
+---
 
+# Services
 
-                    +----------------+
-                    | Client Agent   |
-                    +----------------+
-                            |
-                            v
-                    +----------------+
-                    | Worker Agent   |
-                    +----------------+
-                            |
-                            v
-                    +----------------+
-                    | Verifier Agent |
-                    +----------------+
-                            |
-                            v
-                    +----------------+
-                    | Escrow Service |
-                    +----------------+
+| Service | Port |
+|----------|------|
+| Frontend Dashboard | 4173 |
+| Client Agent | 8000 |
+| Worker Agent | 8001 |
+| Verifier Agent | 8002 |
+| Escrow Service | 8003 |
+| PostgreSQL | 5432 |
 
-                    Task Flow:
-Client Agent → Worker Agent → Verifier Agent → Escrow Service
+---
+
+# API Endpoints
+
+## Client Agent
+
+| Method | Endpoint |
+|---------|----------|
+| GET | / |
+| POST | /create-task |
+| GET | /agent-card |
+| GET | /discovery-agent |
+
+---
+
+## Worker Agent
+
+| Method | Endpoint |
+|---------|----------|
+| GET | / |
+| POST | /accept-task |
+| GET | /agent-card |
+
+---
+
+## Verifier Agent
+
+| Method | Endpoint |
+|---------|----------|
+| POST | /verify |
+
+---
+
+## Escrow Service
+
+| Method | Endpoint |
+|---------|----------|
+| GET | / |
+| POST | /lock-funds |
+| POST | /release-funds |
+| GET | /escrow |
+| GET | /transactions |
+| GET | /agent-card |
+
+---
+
+# Local Development
+
+## Clone Repository
+
+```bash
+git clone https://github.com/Abhay-Thakur-18/trust-a2a-project-v2.git
+
+cd trust-a2a-project-v2
+```
+
+---
+
+## Backend
+
+```bash
+docker compose up --build
+```
+
+---
+
+## Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+Production Preview
+
+```bash
+npm run preview
+```
+
+---
+
+# Environment Variables
+
+Example:
+
+```env
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+DATABASE_URL=YOUR_DATABASE_URL
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+```
+
+---
+
+# Dashboard Modules
+
+- Dashboard
+- Tasks
+- Workers
+- Verifications
+- Escrow
+- Transactions
+- Reports
+- Settings
+- User Profile
+
+---
+
+# Project Highlights
+
+- Modular Microservices
+- Independent Agent Communication
+- Dockerized Deployment
+- Escrow Controlled Payments
+- Verification Pipeline
+- PostgreSQL Persistence
+- Modern React Dashboard
+- Protected Routes
+- Google Authentication
+- Analytics & Reports
+
+---
+
+# Current Status
+
+| Module | Status |
+|----------|--------|
+| Frontend Dashboard | Completed |
+| Backend Services | Completed |
+| PostgreSQL Integration | Completed |
+| Docker Deployment | Completed |
+| Google OAuth | Configured |
+| Escrow Workflow | Completed |
+| Task Verification | Completed |
+| Analytics Dashboard | Completed |
+
+---
+
+# Future Improvements
+
+- JWT Authentication
+- WebSocket Notifications
+- Redis Queue
+- Agent Discovery Registry
+- Reputation Engine
+- Trust Score Algorithm
+- Audit Logging
+- Kubernetes Deployment
+- CI/CD Pipeline
+- Automated Testing
+
+---
+
+# Author
+
+**Abhay Pratap Singh**
+
+Artificial Intelligence Engineer
+
+GitHub
+
+https://github.com/Abhay-Thakur-18
+
+LinkedIn
+
+https://www.linkedin.com/in/abhay-pratap-singh-engineer/
+
+---
+
+# License
+
+This project is licensed under the MIT License.
+
+---
+
+If you found this project useful, consider giving the repository a ⭐.

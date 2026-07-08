@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sys
 import os
@@ -16,6 +17,14 @@ from gemini_judge import evaluate_report
 initialize_database()
 
 app = FastAPI(title="Verifier Agent")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class VerifyRequest(BaseModel):
@@ -78,7 +87,15 @@ def verify(data: VerifyRequest):
             score += 20
 
         verified = score >= 80
-        feedback = "Fallback rule-based verification used."
+        passed = [label for label, ok in checks.items() if ok]
+        failed = [label.replace("_", " ").title() for label, ok in checks.items() if not ok]
+        feedback = (
+            f"Rule-based verification completed with score {score}/100. "
+            f"Passed checks: {', '.join(passed) if passed else 'none'}. "
+            f"Missing checks: {', '.join(failed) if failed else 'none'}. "
+            f"Report length: {len(report)} characters. "
+            f"{'Task approved for escrow release.' if verified else 'Task rejected — escrow payment will be blocked.'}"
+        )
 
     print("\n========== VERIFIER ==========")
     print("Task ID :", data.task_id)
@@ -139,6 +156,17 @@ def verify(data: VerifyRequest):
         "score": score,
         "feedback": feedback
     }
+
+
+@app.get("/verifications")
+def list_verifications():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM verifications ORDER BY created_at DESC LIMIT 100")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return {"total": len(rows), "verifications": rows}
 
 
 @app.get("/.well-known/agent.json")
