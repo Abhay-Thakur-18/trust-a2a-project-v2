@@ -139,23 +139,78 @@ function ReportDetail() {
               <section
                 key={`${section.title}-${index}`}
                 id={`section-${index}`}
-                className="report-section rounded-2xl border border-border/60 bg-background/80 p-5 shadow-sm"
+                className="report-section rounded-2xl border border-border/60 bg-background/80 overflow-hidden shadow-sm"
               >
-                <h2 className="text-lg font-semibold text-primary">{section.title}</h2>
-                <div className="report-prose mt-4 space-y-4 text-sm leading-8 text-foreground/90">
-                  {section.content.split("\n\n").map((paragraph, idx) => {
-                    const trimmed = paragraph.trim();
-                    if (trimmed.startsWith("- ") || trimmed.match(/^\d+\./)) {
-                      const items = trimmed.split("\n").filter(Boolean);
+                {/* Section header */}
+                <div className="flex items-center gap-3 border-b border-border/40 bg-muted/30 px-5 py-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                    {index + 1}
+                  </span>
+                  <h2 className="text-base font-semibold text-primary">{section.title}</h2>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  {section.content.split("\n\n").map((block, idx) => {
+                    const trimmed = block.trim();
+                    if (!trimmed) return null;
+
+                    // Bullet list
+                    if (trimmed.match(/^[-*]\s/m)) {
+                      const items = trimmed.split("\n").filter((l) => l.trim());
                       return (
-                        <ul key={idx} className="list-disc space-y-2 pl-5">
-                          {items.map((item, itemIdx) => (
-                            <li key={itemIdx}>{item.replace(/^[-\d.]+\s*/, "")}</li>
+                        <ul key={idx} className="space-y-2 pl-1">
+                          {items.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm leading-7 text-foreground/90">
+                              <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+                              <span>{item.replace(/^[-*]\s+/, "")}</span>
+                            </li>
                           ))}
                         </ul>
                       );
                     }
-                    return <p key={idx}>{trimmed}</p>;
+
+                    // Numbered list
+                    if (trimmed.match(/^\d+\.\s/m)) {
+                      const items = trimmed.split("\n").filter((l) => l.trim());
+                      return (
+                        <ol key={idx} className="space-y-2 pl-1">
+                          {items.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2.5 text-sm leading-7 text-foreground/90">
+                              <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
+                                {i + 1}
+                              </span>
+                              <span>{item.replace(/^\d+\.\s+/, "")}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      );
+                    }
+
+                    // Key-value pairs
+                    if (trimmed.includes(":") && trimmed.split("\n").every((l) => l.includes(":"))) {
+                      const pairs = trimmed.split("\n").filter(Boolean);
+                      return (
+                        <div key={idx} className="grid gap-1.5 rounded-lg border border-border/40 bg-muted/20 p-3">
+                          {pairs.map((pair, i) => {
+                            const colonIdx = pair.indexOf(":");
+                            const key = pair.slice(0, colonIdx).trim();
+                            const val = pair.slice(colonIdx + 1).trim();
+                            return (
+                              <div key={i} className="flex flex-wrap items-baseline gap-2 text-sm">
+                                <span className="font-medium text-foreground/70 min-w-[140px]">{key}:</span>
+                                <span className="text-foreground/90">{val}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <p key={idx} className="text-sm leading-8 text-foreground/90">
+                        {trimmed}
+                      </p>
+                    );
                   })}
                 </div>
               </section>
