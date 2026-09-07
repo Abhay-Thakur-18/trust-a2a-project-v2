@@ -1,20 +1,35 @@
+import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 
-DB_HOST = "postgres"
-DB_NAME = "trustdb"
-DB_USER = "trustuser"
-DB_PASSWORD = "trustpass"
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST", "postgres")
+DB_NAME = os.getenv("DB_NAME", "trustdb")
+DB_USER = os.getenv("DB_USER", "trustuser")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "trustpass")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_SSLMODE = os.getenv("DB_SSLMODE", "")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
 
 def get_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        cursor_factory=RealDictCursor
-    )
+    if DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
+    conn_kwargs = {
+        "host": DB_HOST,
+        "database": DB_NAME,
+        "user": DB_USER,
+        "password": DB_PASSWORD,
+        "port": DB_PORT,
+        "cursor_factory": RealDictCursor,
+    }
+    if DB_SSLMODE:
+        conn_kwargs["sslmode"] = DB_SSLMODE
+
+    return psycopg2.connect(**conn_kwargs)
 
 
 def initialize_database():

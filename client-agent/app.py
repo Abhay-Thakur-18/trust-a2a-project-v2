@@ -22,9 +22,12 @@ initialize_database()
 
 app = FastAPI(title="Client Agent")
 
+frontend_url = os.getenv("FRONTEND_URL", "").strip()
+allowed_origins = [origin.strip() for origin in frontend_url.split(",") if origin.strip()] if frontend_url else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,11 +36,11 @@ app.add_middleware(
 PRIVATE_KEY, PUBLIC_KEY = generate_keys()
 
 # ----------------------------
-# Docker Service URLs (FIXED)
+# Docker / Standalone Service URLs
 # ----------------------------
-WORKER_URL = "http://worker-agent:8001"
-VERIFIER_URL = "http://verifier-agent:8002"
-ESCROW_URL = "http://escrow-service:8003"
+WORKER_URL = os.getenv("WORKER_URL", "http://worker-agent:8001")
+VERIFIER_URL = os.getenv("VERIFIER_URL", "http://verifier-agent:8002")
+ESCROW_URL = os.getenv("ESCROW_URL", "http://escrow-service:8003")
 
 
 class TaskRequest(BaseModel):
@@ -54,6 +57,14 @@ def home():
     return {
         "service": "client-agent",
         "status": "running"
+    }
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "service": "client-agent"
     }
 
 

@@ -1,0 +1,77 @@
+services:
+  - type: web
+    name: trust-client-agent
+    env: docker
+    dockerfilePath: client-agent/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trust-a2a-db
+          property: connectionString
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: WORKER_URL
+        fromService:
+          type: web
+          name: trust-worker-agent
+          property: url
+      - key: VERIFIER_URL
+        fromService:
+          type: web
+          name: trust-verifier-agent
+          property: url
+      - key: ESCROW_URL
+        fromService:
+          type: web
+          name: trust-escrow-service
+          property: url
+      - key: FRONTEND_URL
+        sync: false
+
+  - type: web
+    name: trust-worker-agent
+    env: docker
+    dockerfilePath: worker-agent/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trust-a2a-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  - type: web
+    name: trust-verifier-agent
+    env: docker
+    dockerfilePath: verifier-agent/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trust-a2a-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  - type: web
+    name: trust-escrow-service
+    env: docker
+    dockerfilePath: escrow-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trust-a2a-db
+          property: connectionString
+      - key: FRONTEND_URL
+        sync: false

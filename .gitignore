@@ -1,5 +1,21 @@
+# Python
 venv/
 __pycache__/
 *.pyc
+*.pyo
+
+# Environments (except .env.example)
 .env
+.env.*
+!.env.example
+
+# Frontend & Dependencies
+node_modules/
+dist/
+build/
+.DS_Store
+
+# IDE & Editor
 .vscode/
+.idea/
+.cursor/

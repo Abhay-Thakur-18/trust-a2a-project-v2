@@ -5,15 +5,15 @@ services:
     container_name: trust-postgres
     restart: always
     environment:
-      POSTGRES_USER: trustuser
-      POSTGRES_PASSWORD: trustpass
-      POSTGRES_DB: trustdb
+      POSTGRES_USER: ${DB_USER:-trustuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-trustpass}
+      POSTGRES_DB: ${DB_NAME:-trustdb}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trustuser -d trustdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-trustuser} -d ${DB_NAME:-trustdb}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,10 +25,19 @@ services:
     ports:
       - "8000:8000"
     environment:
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-trustdb}
+      DB_USER: ${DB_USER:-trustuser}
+      DB_PASSWORD: ${DB_PASSWORD:-trustpass}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   worker-agent:
     build:
@@ -37,10 +46,19 @@ services:
     ports:
       - "8001:8001"
     environment:
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-trustdb}
+      DB_USER: ${DB_USER:-trustuser}
+      DB_PASSWORD: ${DB_PASSWORD:-trustpass}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   verifier-agent:
     build:
@@ -49,10 +67,19 @@ services:
     ports:
       - "8002:8002"
     environment:
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-trustdb}
+      DB_USER: ${DB_USER:-trustuser}
+      DB_PASSWORD: ${DB_PASSWORD:-trustpass}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8002/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   escrow-service:
     build:
@@ -60,27 +87,37 @@ services:
       dockerfile: escrow-service/Dockerfile
     ports:
       - "8003:8003"
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-trustdb}
+      DB_USER: ${DB_USER:-trustuser}
+      DB_PASSWORD: ${DB_PASSWORD:-trustpass}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8003/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend-dashboard:
     build:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     ports:
       - "4173:4173"
     depends_on:
       client-agent:
-        condition: service_started
+        condition: service_healthy
       worker-agent:
-        condition: service_started
+        condition: service_healthy
       verifier-agent:
-        condition: service_started
+        condition: service_healthy
       escrow-service:
-        condition: service_started
+        condition: service_healthy
 
 
 volumes:

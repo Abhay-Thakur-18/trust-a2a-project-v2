@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r verifier-agent/requirements.txt
 
 WORKDIR /app/verifier-agent
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8002}

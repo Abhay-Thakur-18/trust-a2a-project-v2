@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Wifi, WifiOff, Activity, Server, Shield, Vault, Clock } from "lucide-react";
+import { SERVICE_URLS } from "../../services/api";
 
 const SERVICES = [
-  { key: "client",   label: "Client Agent",   url: "http://localhost:8000", color: "#3B82F6" },
-  { key: "worker",   label: "Worker Agent",   url: "http://localhost:8001", color: "#06B6D4" },
-  { key: "verifier", label: "Verifier Agent", url: "http://localhost:8002", color: "#10B981" },
-  { key: "escrow",   label: "Escrow Service", url: "http://localhost:8003", color: "#8B5CF6" },
+  { key: "client",   label: "Client Agent",   url: SERVICE_URLS.client,   color: "#3B82F6" },
+  { key: "worker",   label: "Worker Agent",   url: SERVICE_URLS.worker,   color: "#06B6D4" },
+  { key: "verifier", label: "Verifier Agent", url: SERVICE_URLS.verifier, color: "#10B981" },
+  { key: "escrow",   label: "Escrow Service", url: SERVICE_URLS.escrow,   color: "#8B5CF6" },
 ];
 
 function useServiceStatus() {

@@ -15,9 +15,12 @@ initialize_database()
 
 app = FastAPI(title="Worker Agent")
 
+frontend_url = os.getenv("FRONTEND_URL", "").strip()
+allowed_origins = [origin.strip() for origin in frontend_url.split(",") if origin.strip()] if frontend_url else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,6 +37,14 @@ def home():
     return {
         "service": "worker-agent",
         "status": "running"
+    }
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "service": "worker-agent"
     }
 
 

@@ -12,6 +12,7 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { resetPlatform } from "../../services/taskService";
+import { SERVICE_URLS } from "../../services/api";
 
 const TABS = [
   { id: "general",       label: "General",       icon: LayoutGrid    },
@@ -242,10 +243,10 @@ function Settings() {
             </CardHeader>
             <CardContent className="space-y-2">
               {[
-                { name: "Client Agent",   url: "http://localhost:8000", color: "oklch(0.65 0.25 264)" },
-                { name: "Worker Agent",   url: "http://localhost:8001", color: "oklch(0.65 0.2 195)"  },
-                { name: "Verifier Agent", url: "http://localhost:8002", color: "oklch(0.65 0.18 150)" },
-                { name: "Escrow Service", url: "http://localhost:8003", color: "oklch(0.7 0.2 310)"   },
+                { name: "Client Agent",   url: SERVICE_URLS.client,   color: "oklch(0.65 0.25 264)" },
+                { name: "Worker Agent",   url: SERVICE_URLS.worker,   color: "oklch(0.65 0.2 195)"  },
+                { name: "Verifier Agent", url: SERVICE_URLS.verifier, color: "oklch(0.65 0.18 150)" },
+                { name: "Escrow Service", url: SERVICE_URLS.escrow,   color: "oklch(0.7 0.2 310)"   },
               ].map(({ name, url, color }) => (
                 <div key={name} className="flex items-center justify-between rounded-xl border border-border/60 px-3 py-2.5 hover:bg-muted/20 transition-colors">
                   <div className="flex items-center gap-2">

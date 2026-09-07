@@ -8,19 +8,28 @@ export const parseReportSections = (report = "") => {
   lines.forEach((line) => {
     const heading = line.match(/^#{1,3}\s+(.+)$/);
     if (heading) {
-      if (current.title || current.body.length) sections.push(current);
+      const hasContent = current.body.some((l) => l.trim().length > 0);
+      if (hasContent) {
+        sections.push({
+          title: current.title,
+          content: current.body.join("\n").trim(),
+        });
+      }
       current = { title: heading[1].trim(), body: [] };
       return;
     }
     current.body.push(line);
   });
 
-  if (current.title || current.body.length) sections.push(current);
+  const hasContent = current.body.some((l) => l.trim().length > 0);
+  if (hasContent) {
+    sections.push({
+      title: current.title,
+      content: current.body.join("\n").trim(),
+    });
+  }
 
-  return sections.map((section) => ({
-    title: section.title,
-    content: section.body.join("\n").trim(),
-  })).filter((section) => section.content || section.title);
+  return sections.filter((section) => section.content && section.content.trim().length > 0);
 };
 
 export const getScoreTone = (score) => {

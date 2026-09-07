@@ -1,16 +1,27 @@
+import os
+import sys
+import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import time
-from shared.database import get_connection
-from shared.database import initialize_database
+from dotenv import load_dotenv
+
+load_dotenv()
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from shared.database import get_connection, initialize_database
+
 initialize_database()
 
 app = FastAPI(title="Escrow Service")
 
+frontend_url = os.getenv("FRONTEND_URL", "").strip()
+allowed_origins = [origin.strip() for origin in frontend_url.split(",") if origin.strip()] if frontend_url else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,6 +38,14 @@ def home():
     return {
         "service": "escrow-service",
         "status": "running"
+    }
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "service": "escrow-service"
     }
 
 

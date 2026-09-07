@@ -6,81 +6,10 @@ import { Button, buttonVariants } from "../ui/button";
 import { Badge } from "../ui/badge";
 import StatusBadge from "./StatusBadge";
 import FeedbackPanel from "./FeedbackPanel";
+import MarkdownRenderer from "./MarkdownRenderer";
 import { formatCurrency } from "../../lib/formatters";
 import { parseReportSections } from "../../lib/reportFormatter";
 import { cn } from "../../lib/utils";
-
-/** Render a block of text with support for bullet lists, numbered lists, and paragraphs */
-function ReportContentBlock({ content }) {
-  const blocks = content.split("\n\n");
-  return (
-    <div className="space-y-3">
-      {blocks.map((block, idx) => {
-        const trimmed = block.trim();
-        if (!trimmed) return null;
-
-        // Bullet list
-        if (trimmed.match(/^[-*]\s/m)) {
-          const items = trimmed.split("\n").filter((l) => l.trim());
-          return (
-            <ul key={idx} className="space-y-1.5 pl-1">
-              {items.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm leading-7 text-foreground/90">
-                  <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
-                  <span>{item.replace(/^[-*]\s+/, "")}</span>
-                </li>
-              ))}
-            </ul>
-          );
-        }
-
-        // Numbered list
-        if (trimmed.match(/^\d+\.\s/m)) {
-          const items = trimmed.split("\n").filter((l) => l.trim());
-          return (
-            <ol key={idx} className="space-y-1.5 pl-1 counter-reset-list">
-              {items.map((item, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-sm leading-7 text-foreground/90">
-                  <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
-                    {i + 1}
-                  </span>
-                  <span>{item.replace(/^\d+\.\s+/, "")}</span>
-                </li>
-              ))}
-            </ol>
-          );
-        }
-
-        // Key-value pairs like "Label: value"
-        if (trimmed.includes(":") && trimmed.split("\n").every((l) => l.includes(":"))) {
-          const pairs = trimmed.split("\n").filter(Boolean);
-          return (
-            <div key={idx} className="grid gap-1.5 rounded-lg border border-border/40 bg-muted/20 p-3">
-              {pairs.map((pair, i) => {
-                const colonIdx = pair.indexOf(":");
-                const key = pair.slice(0, colonIdx).trim();
-                const val = pair.slice(colonIdx + 1).trim();
-                return (
-                  <div key={i} className="flex flex-wrap items-baseline gap-2 text-sm">
-                    <span className="font-medium text-foreground/70 min-w-[120px]">{key}:</span>
-                    <span className="text-foreground/90">{val}</span>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        }
-
-        // Regular paragraph
-        return (
-          <p key={idx} className="text-sm leading-7 text-foreground/90">
-            {trimmed}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
 
 function ReportViewer({ task, defaultOpen = false, showDetailLink = true }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -165,10 +94,9 @@ function ReportViewer({ task, defaultOpen = false, showDetailLink = true }) {
         <CardContent className="border-b border-border/60 bg-muted/10 p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Report Preview</p>
           <h3 className="mt-2 text-base font-semibold text-primary">{previewSection.title}</h3>
-          <p className="mt-2 line-clamp-4 text-sm leading-7 text-foreground/80">
-            {previewSection.content.replace(/^[-*\d.]\s*/gm, "").slice(0, 420)}
-            {previewSection.content.length > 420 ? "…" : ""}
-          </p>
+          <div className="mt-2 line-clamp-4 text-sm leading-7 text-foreground/80">
+            <MarkdownRenderer content={previewSection.content.slice(0, 420) + (previewSection.content.length > 420 ? "…" : "")} />
+          </div>
         </CardContent>
       ) : null}
 
@@ -193,7 +121,7 @@ function ReportViewer({ task, defaultOpen = false, showDetailLink = true }) {
                   </div>
                 </div>
                 <div className="p-4">
-                  <ReportContentBlock content={section.content} />
+                  <MarkdownRenderer content={section.content} />
                 </div>
               </section>
             ))}
