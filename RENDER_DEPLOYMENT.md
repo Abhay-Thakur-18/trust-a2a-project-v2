@@ -113,7 +113,7 @@ This guide provides step-by-step instructions for deploying the 4 FastAPI micros
 
 ## 4. Architectural Verification & Security Checklist
 
-1. **No Hardcoded URLs**: All inter-service calls use `WORKER_URL`, `VERIFIER_URL`, and `ESCROW_URL` environment variables.
+1. **No Hardcoded URLs**: Inter-service calls use `WORKER_URL`, `VERIFIER_URL`, and `ESCROW_URL` or Render Blueprint `host`/`port` pairs (`WORKER_HOST`/`WORKER_PORT`, etc.) dynamically resolved at runtime.
 2. **No Localhost / Container Dependencies**: Database connection falls back to `DATABASE_URL` when provided by Render PostgreSQL.
 3. **CORS Flexibility**: All services dynamically configure `CORSMiddleware` using `FRONTEND_URL`.
 4. **Local Docker Continuity**: Local Docker Compose development works seamlessly using `docker-compose up`.

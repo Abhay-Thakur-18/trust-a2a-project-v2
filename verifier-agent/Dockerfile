@@ -5,6 +5,8 @@ WORKDIR /app
 COPY . .
 
 RUN pip install --no-cache-dir -r verifier-agent/requirements.txt
+ 
+ENV PYTHONPATH=/app
 
 WORKDIR /app/verifier-agent
 

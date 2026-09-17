@@ -1,7 +1,7 @@
 services:
   - type: web
     name: trust-client-agent
-    env: docker
+    runtime: docker
     dockerfilePath: client-agent/Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -12,27 +12,42 @@ services:
           property: connectionString
       - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: WORKER_URL
+      - key: WORKER_HOST
         fromService:
           type: web
           name: trust-worker-agent
-          property: url
-      - key: VERIFIER_URL
+          property: host
+      - key: WORKER_PORT
+        fromService:
+          type: web
+          name: trust-worker-agent
+          property: port
+      - key: VERIFIER_HOST
         fromService:
           type: web
           name: trust-verifier-agent
-          property: url
-      - key: ESCROW_URL
+          property: host
+      - key: VERIFIER_PORT
+        fromService:
+          type: web
+          name: trust-verifier-agent
+          property: port
+      - key: ESCROW_HOST
         fromService:
           type: web
           name: trust-escrow-service
-          property: url
+          property: host
+      - key: ESCROW_PORT
+        fromService:
+          type: web
+          name: trust-escrow-service
+          property: port
       - key: FRONTEND_URL
         sync: false
 
   - type: web
     name: trust-worker-agent
-    env: docker
+    runtime: docker
     dockerfilePath: worker-agent/Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -48,7 +63,7 @@ services:
 
   - type: web
     name: trust-verifier-agent
-    env: docker
+    runtime: docker
     dockerfilePath: verifier-agent/Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -64,7 +79,7 @@ services:
 
   - type: web
     name: trust-escrow-service
-    env: docker
+    runtime: docker
     dockerfilePath: escrow-service/Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -75,3 +90,9 @@ services:
           property: connectionString
       - key: FRONTEND_URL
         sync: false
+
+databases:
+  - name: trust-a2a-db
+    databaseName: trustdb
+    user: trustuser
+    plan: free

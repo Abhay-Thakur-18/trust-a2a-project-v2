@@ -35,12 +35,34 @@ app.add_middleware(
 
 PRIVATE_KEY, PUBLIC_KEY = generate_keys()
 
-# ----------------------------
-# Docker / Standalone Service URLs
-# ----------------------------
-WORKER_URL = os.getenv("WORKER_URL", "http://worker-agent:8001")
-VERIFIER_URL = os.getenv("VERIFIER_URL", "http://verifier-agent:8002")
-ESCROW_URL = os.getenv("ESCROW_URL", "http://escrow-service:8003")
+def resolve_service_url(env_url: str, env_host: str, env_port: str, default: str) -> str:
+    url_val = os.getenv(env_url, "").strip()
+    if url_val:
+        if not (url_val.startswith("http://") or url_val.startswith("https://")):
+            url_val = f"http://{url_val}"
+        return url_val.rstrip("/")
+
+    host_val = os.getenv(env_host, "").strip()
+    port_val = os.getenv(env_port, "").strip()
+    if host_val:
+        if not (host_val.startswith("http://") or host_val.startswith("https://")):
+            if ":" in host_val:
+                return f"http://{host_val}".rstrip("/")
+            elif port_val:
+                return f"http://{host_val}:{port_val}".rstrip("/")
+            else:
+                return f"http://{host_val}".rstrip("/")
+        else:
+            if ":" not in host_val.split("//", 1)[1] and port_val:
+                return f"{host_val}:{port_val}".rstrip("/")
+            return host_val.rstrip("/")
+
+    return default
+
+
+WORKER_URL = resolve_service_url("WORKER_URL", "WORKER_HOST", "WORKER_PORT", "http://worker-agent:8001")
+VERIFIER_URL = resolve_service_url("VERIFIER_URL", "VERIFIER_HOST", "VERIFIER_PORT", "http://verifier-agent:8002")
+ESCROW_URL = resolve_service_url("ESCROW_URL", "ESCROW_HOST", "ESCROW_PORT", "http://escrow-service:8003")
 
 
 class TaskRequest(BaseModel):
