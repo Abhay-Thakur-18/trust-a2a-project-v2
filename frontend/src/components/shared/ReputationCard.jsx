@@ -2,10 +2,22 @@ import { ShieldCheck, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { getReputationTone } from "../../lib/reportFormatter";
 
-const toneClasses = {
-  success: "text-emerald-600 dark:text-emerald-300",
-  warning: "text-amber-600 dark:text-amber-300",
-  danger: "text-red-600 dark:text-red-300",
+const toneConfig = {
+  success: {
+    icon: "text-emerald-600",
+    bar: "bg-emerald-600",
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  warning: {
+    icon: "text-amber-600",
+    bar: "bg-amber-500",
+    badge: "border-amber-200 bg-amber-50 text-amber-700",
+  },
+  danger: {
+    icon: "text-rose-600",
+    bar: "bg-rose-600",
+    badge: "border-rose-200 bg-rose-50 text-rose-700",
+  },
 };
 
 function ReputationCard({ reputation }) {
@@ -13,49 +25,53 @@ function ReputationCard({ reputation }) {
 
   const score = Number(reputation.score ?? 100);
   const tone = getReputationTone(score);
+  const config = toneConfig[tone] || toneConfig.success;
   const successRate = Number(reputation.success_rate ?? 100);
 
   return (
-    <Card className="transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-      <CardHeader className="pb-2">
+    <Card className="border border-slate-200/80 bg-white shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-sm">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base">{reputation.agent_id || "worker-agent"}</CardTitle>
-          <ShieldCheck size={16} className={toneClasses[tone]} />
+          <CardTitle className="text-sm font-semibold text-slate-900">{reputation.agent_id || "worker-agent"}</CardTitle>
+          <div className="flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium border-slate-200 bg-slate-50 text-slate-700">
+            <ShieldCheck size={13} className={config.icon} />
+            <span>Score {score}</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-end justify-between">
+        <div className="flex items-baseline justify-between">
           <div>
-            <p className="text-3xl font-semibold tracking-tight">{score}</p>
-            <p className="text-xs text-muted-foreground">Reputation Score</p>
+            <p className="text-2xl font-bold tracking-tight text-slate-900">{score}</p>
+            <p className="text-xs text-slate-500">Reputation Index</p>
           </div>
-          <div className="text-right text-sm">
-            <p className="font-medium">{successRate}%</p>
-            <p className="text-xs text-muted-foreground">Success Rate</p>
+          <div className="text-right">
+            <p className="text-sm font-semibold text-slate-900">{successRate}%</p>
+            <p className="text-xs text-slate-500">Success Rate</p>
           </div>
         </div>
 
-        <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all duration-700"
-            style={{ width: `${score}%` }}
+            className={`h-full rounded-full transition-all duration-500 ${config.bar}`}
+            style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
-            <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-300">
-              <TrendingUp size={14} />
-              <span className="text-xs uppercase tracking-wide">Success</span>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-lg border border-slate-200/80 bg-slate-50/60 p-2.5">
+            <div className="flex items-center gap-1 text-emerald-700 font-medium">
+              <TrendingUp size={13} />
+              <span>Success</span>
             </div>
-            <p className="mt-1 text-lg font-semibold">{reputation.success_count ?? 0}</p>
+            <p className="mt-1 text-base font-bold text-slate-900">{reputation.success_count ?? 0}</p>
           </div>
-          <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2">
-            <div className="flex items-center gap-1 text-red-600 dark:text-red-300">
-              <TrendingDown size={14} />
-              <span className="text-xs uppercase tracking-wide">Failures</span>
+          <div className="rounded-lg border border-slate-200/80 bg-slate-50/60 p-2.5">
+            <div className="flex items-center gap-1 text-rose-700 font-medium">
+              <TrendingDown size={13} />
+              <span>Failures</span>
             </div>
-            <p className="mt-1 text-lg font-semibold">{reputation.failure_count ?? 0}</p>
+            <p className="mt-1 text-base font-bold text-slate-900">{reputation.failure_count ?? 0}</p>
           </div>
         </div>
       </CardContent>

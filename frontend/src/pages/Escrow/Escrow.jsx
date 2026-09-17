@@ -1,5 +1,5 @@
-import { RefreshCw, Activity } from "lucide-react";
-import { useMemo } from "react";
+import { RefreshCw, Lock, Unlock, Wallet, Ban, ArrowRight, ShieldCheck, Check, Copy } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { getEscrow, getEscrowAgentCard, getTransactions } from "../../services/escrowService";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -9,12 +9,10 @@ import MetricCard from "../../components/shared/MetricCard";
 import StatusBadge from "../../components/shared/StatusBadge";
 import { EmptyState, ErrorState, LoadingSkeleton } from "../../components/shared/DataState";
 import { formatCurrency, toArray } from "../../lib/formatters";
-import { Lock, Unlock, Wallet, Ban } from "lucide-react";
-import EscrowThroughputChart from "../../components/charts/EscrowThroughputChart";
-import EscrowStatusChart from "../../components/charts/EscrowStatusChart";
-import { Badge } from "../../components/ui/badge";
+import { Link } from "react-router-dom";
 
 function Escrow() {
+  const [copiedId, setCopiedId] = useState(null);
   const { data, loading, error, refetch } = useApiQuery(async () => {
     const [escrowResult, transactionsResult, cardResult] = await Promise.allSettled([
       getEscrow(),
@@ -34,150 +32,176 @@ function Escrow() {
 
   const transactions = useMemo(() => data?.transactions || [], [data]);
   const lockedCount = useMemo(() => transactions.filter((t) => t.status === "locked").length, [transactions]);
-  const completedCount = useMemo(() => transactions.filter((t) => t.status === "completed").length, [transactions]);
-  const blockedCount = useMemo(() => transactions.filter((t) => t.status === "blocked").length, [transactions]);
+  const completedCount = useMemo(() => transactions.filter((t) => ["completed", "paid"].includes(t.status)).length, [transactions]);
+  const totalLockedAmount = useMemo(() => {
+    return transactions.filter((t) => t.status === "locked").reduce((acc, t) => acc + Number(t.amount || 0), 0);
+  }, [transactions]);
+  const totalReleasedAmount = useMemo(() => {
+    return transactions.filter((t) => ["completed", "paid"].includes(t.status)).reduce((acc, t) => acc + Number(t.amount || 0), 0);
+  }, [transactions]);
+
+  const copyId = (id, e) => {
+    if (e) e.stopPropagation();
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
 
   if (loading && !data) return <LoadingSkeleton rows={8} />;
   if (error && !data) return <ErrorState onRetry={() => refetch()} />;
 
   const escrow = data?.escrow || {};
+  const displayLocked = escrow.locked_balance ?? totalLockedAmount;
+  const displayReleased = escrow.released_total ?? totalReleasedAmount;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Escrow</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Live fund locking, release, and ledger from escrow service.
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Escrow</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Financial operations dashboard for fund locks, verifier authorizations, and settlement payouts.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-9 px-3.5 text-xs font-semibold border-slate-200 text-slate-700 bg-white hover:bg-slate-50 shadow-2xs"
+          >
+            <RefreshCw size={14} className={`mr-1.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh Vault
+          </Button>
+        </div>
       </div>
 
       {data?.errors?.length ? (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
-          Some escrow data failed to load. Showing available results.
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 flex items-center gap-2.5">
+          <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+          <span>Some escrow nodes returned partial telemetry. Available records are rendered below.</span>
         </div>
       ) : null}
 
-      {/* Metric Cards */}
-      <div className="stagger-children grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* ── Top Metrics: 4 KPI Cards ── */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          title="Locked Balance"
-          value={formatCurrency(escrow.locked_balance ?? escrow.balance ?? 0)}
+          title="Total Locked"
+          value={formatCurrency(displayLocked)}
           icon={Lock}
-          delta={`${lockedCount} active lock${lockedCount !== 1 ? "s" : ""}`}
+          delta={`${lockedCount} active locks`}
           tone="warning"
         />
         <MetricCard
-          title="Released Total"
-          value={formatCurrency(escrow.released_total ?? 0)}
+          title="Total Released"
+          value={formatCurrency(displayReleased)}
           icon={Unlock}
-          delta={`${completedCount} completed`}
+          delta={`${completedCount} settlements completed`}
           tone="success"
         />
         <MetricCard
-          title="Blocked Funds"
-          value={formatCurrency(escrow.blocked_total ?? 0)}
-          icon={Ban}
-          delta={blockedCount ? `${blockedCount} blocked` : "None blocked"}
-          tone="warning"
+          title="Active Locks"
+          value={lockedCount}
+          icon={ShieldCheck}
+          delta={lockedCount > 0 ? "Awaiting verifier evaluation" : "No funds currently locked"}
+          tone={lockedCount > 0 ? "warning" : "default"}
         />
         <MetricCard
-          title="Total Transactions"
+          title="Transactions"
           value={escrow.total_transactions ?? transactions.length}
           icon={Wallet}
-          delta="All escrow events"
+          delta="Total immutable ledger entries"
+          tone="default"
         />
       </div>
 
-      {/* Charts */}
-      {transactions.length > 0 && (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <EscrowThroughputChart transactions={transactions} className="xl:col-span-2" />
-          <EscrowStatusChart transactions={transactions} />
-        </div>
-      )}
-
-      {/* Escrow Ledger Table */}
-      <Card className="glass-panel overflow-hidden">
-        <CardHeader className="border-b border-border/60 bg-gradient-to-r from-primary/5 via-transparent to-accent/5">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Activity size={16} className="text-primary" />
-                Escrow Ledger
-              </CardTitle>
-              <CardDescription className="mt-1">
-                {transactions.length
-                  ? `${transactions.length} transaction${transactions.length !== 1 ? "s" : ""} — showing full escrow history`
-                  : "No transactions recorded yet"}
-              </CardDescription>
-            </div>
-            {transactions.length > 0 && (
-              <Badge variant="outline" className="font-mono text-xs">
-                {transactions.length} records
-              </Badge>
-            )}
+      {/* ── Escrow Records Table ── */}
+      <Card className="border border-slate-200 bg-white shadow-xs overflow-hidden">
+        <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base font-bold text-slate-900">Escrow Records</CardTitle>
+            <CardDescription className="text-xs text-slate-500">
+              Complete register of all locked and released fund allocations
+            </CardDescription>
           </div>
+          <span className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono font-semibold text-slate-700">
+            {transactions.length} Records
+          </span>
         </CardHeader>
         <CardContent className="p-0">
           {!transactions.length ? (
-            <div className="p-8">
+            <div className="p-10">
               <EmptyState
-                title="No escrow transactions"
-                description="Create a task to lock funds in escrow. Transactions will appear here once the pipeline starts."
+                title="No escrow records found"
+                description="Create a task to lock funds into escrow. Financial logs will populate as agents execute."
               />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="pl-5 font-semibold text-[11px] uppercase tracking-wide">#</TableHead>
-                    <TableHead className="font-semibold text-[11px] uppercase tracking-wide">Task ID</TableHead>
-                    <TableHead className="font-semibold text-[11px] uppercase tracking-wide">Payer</TableHead>
-                    <TableHead className="font-semibold text-[11px] uppercase tracking-wide">Payee</TableHead>
-                    <TableHead className="font-semibold text-[11px] uppercase tracking-wide">Status</TableHead>
-                    <TableHead className="font-semibold text-[11px] uppercase tracking-wide">Date</TableHead>
-                    <TableHead className="text-right pr-5 font-semibold text-[11px] uppercase tracking-wide">Amount</TableHead>
+                  <TableRow className="border-b border-slate-200 bg-slate-50/60 text-xs">
+                    <TableHead className="py-3.5 px-4 font-bold text-slate-700 min-w-[260px]">Task</TableHead>
+                    <TableHead className="py-3.5 px-3 font-bold text-slate-700 min-w-[120px]">Amount</TableHead>
+                    <TableHead className="py-3.5 px-3 font-bold text-slate-700 min-w-[110px]">Status</TableHead>
+                    <TableHead className="py-3.5 px-3 font-bold text-slate-700 min-w-[110px]">Created</TableHead>
+                    <TableHead className="py-3.5 px-3 font-bold text-slate-700 min-w-[110px]">Released</TableHead>
+                    <TableHead className="py-3.5 px-4 text-right font-bold text-slate-700 min-w-[140px]">Transaction ID</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((tx, idx) => (
-                    <TableRow
-                      key={tx.id}
-                      className="group transition-all duration-150 hover:bg-primary/5 cursor-default"
-                      style={{ borderLeft: "3px solid transparent" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderLeftColor = "var(--primary)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderLeftColor = "transparent"; }}
-                    >
-                      <TableCell className="pl-5 text-muted-foreground font-mono text-xs">{idx + 1}</TableCell>
-                      <TableCell className="max-w-[160px] truncate font-mono text-xs text-muted-foreground group-hover:text-foreground transition-colors" title={tx.task_id}>
-                        {tx.task_id || <span className="italic text-muted-foreground/50">—</span>}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {tx.payer || <span className="text-muted-foreground italic text-xs">Not assigned</span>}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {tx.payee || <span className="text-muted-foreground italic text-xs">Not assigned</span>}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={tx.status} />
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {tx.created_at?.slice(0, 10) || <span className="italic text-xs">—</span>}
-                      </TableCell>
-                      <TableCell className="text-right pr-5 font-semibold text-sm group-hover:text-primary transition-colors">
-                        {formatCurrency(tx.amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {transactions.map((tx, idx) => {
+                    const isReleased = ["completed", "paid"].includes(String(tx.status).toLowerCase());
+                    const txnId = tx.id ? `TXN-${tx.id}` : `TXN-${idx + 1}`;
+
+                    return (
+                      <TableRow
+                        key={tx.id || idx}
+                        className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors text-xs"
+                      >
+                        <TableCell className="py-3.5 px-4 max-w-[260px]">
+                          <p className="font-semibold text-slate-900 leading-snug">
+                            {tx.task || tx.task_id || "Autonomous Task Execution"}
+                          </p>
+                          <p className="font-mono text-[11px] text-slate-400 mt-0.5">{tx.task_id || "—"}</p>
+                        </TableCell>
+                        <TableCell className="py-3.5 px-3 font-bold text-slate-900 text-sm">
+                          {formatCurrency(tx.amount)}
+                        </TableCell>
+                        <TableCell className="py-3.5 px-3">
+                          <StatusBadge status={tx.status} />
+                        </TableCell>
+                        <TableCell className="py-3.5 px-3 text-slate-500 whitespace-nowrap">
+                          {tx.created_at ? tx.created_at.slice(0, 10) : "Recent"}
+                        </TableCell>
+                        <TableCell className="py-3.5 px-3 whitespace-nowrap">
+                          {isReleased ? (
+                            <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              Settled ✓
+                            </span>
+                          ) : (
+                            <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                              Locked in Vault
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-3.5 px-4 text-right font-mono text-slate-600">
+                          <div className="flex items-center justify-end gap-1">
+                            <span>{txnId}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => copyId(txnId, e)}
+                              className="text-slate-400 hover:text-slate-600 p-1 rounded"
+                              title="Copy Transaction ID"
+                            >
+                              {copiedId === txnId ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -185,19 +209,19 @@ function Escrow() {
         </CardContent>
       </Card>
 
-      {/* Escrow Agent Card */}
-      <Card className="glass-panel">
-        <CardHeader>
-          <CardTitle className="text-base">Escrow Agent Configuration</CardTitle>
-          <CardDescription>Raw agent card metadata from the escrow service.</CardDescription>
+      {/* ── Escrow Microservice Agent Schema Card ── */}
+      <Card className="border border-slate-200 bg-white shadow-xs">
+        <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="text-sm font-bold text-slate-900">Escrow Service Agent Protocol</CardTitle>
+          <CardDescription className="text-xs text-slate-500">Autonomous payment microservice contract on Port 8003</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-5">
           {Object.keys(data?.card || {}).length === 0 ? (
-            <div className="rounded-xl border border-border/40 bg-muted/20 p-6 text-center">
-              <p className="text-sm text-muted-foreground italic">No agent card data available — ensure the escrow service is running.</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+              <p className="text-xs text-slate-500">No agent card schema available from escrow microservice port 8003.</p>
             </div>
           ) : (
-            <pre className="overflow-x-auto rounded-xl border border-border/40 bg-muted/30 p-4 text-sm text-muted-foreground leading-relaxed">
+            <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-50/70 p-4 text-xs text-slate-800 font-mono leading-relaxed">
               {JSON.stringify(data?.card || {}, null, 2)}
             </pre>
           )}

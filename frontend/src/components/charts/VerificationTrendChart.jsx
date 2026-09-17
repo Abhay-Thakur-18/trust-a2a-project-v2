@@ -14,44 +14,38 @@ function VerificationTooltip({ active, payload, label }) {
   const pt = payload[0]?.payload;
   if (!pt) return null;
 
-  const score     = pt.rawScore;
-  const verified  = pt.verified === 1;
-  const color     = score == null ? "#64748b" : score >= 80 ? "#22c55e" : score >= 60 ? "#f59e0b" : "#ef4444";
+  const score = pt.rawScore;
+  const verified = pt.verified === 1;
+  const color = score == null ? "#64748b" : score >= 80 ? "#16a34a" : score >= 60 ? "#d97706" : "#e11d48";
 
   return (
-    <div
-      className="rounded-xl border px-4 py-3 shadow-xl backdrop-blur-md pointer-events-none"
-      style={{
-        background: "var(--card)",
-        borderColor: color + "66",
-        boxShadow: `0 8px 24px ${color}22`,
-        minWidth: 190,
-      }}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+    <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-lg pointer-events-none min-w-[180px]">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
         {pt.created_at ? new Date(pt.created_at).toLocaleString() : pt.label}
       </p>
 
-      <div className="flex items-center gap-2 mb-1.5">
-        {verified
-          ? <CheckCircle2 size={13} style={{ color: "#22c55e" }} />
-          : <XCircle     size={13} style={{ color: "#ef4444" }} />}
-        <span className="text-xs font-semibold" style={{ color: verified ? "#22c55e" : "#ef4444" }}>
-          {verified ? "Verified" : "Rejected"}
+      <div className="flex items-center gap-1.5 mb-1">
+        {verified ? (
+          <CheckCircle2 size={13} className="text-emerald-600" />
+        ) : (
+          <XCircle size={13} className="text-rose-600" />
+        )}
+        <span className="text-xs font-semibold" style={{ color }}>
+          {verified ? "Verified & Approved" : "Rejected"}
         </span>
       </div>
 
-      <p className="text-2xl font-bold" style={{ color }}>
+      <p className="text-xl font-bold text-slate-900 leading-tight">
         {score != null ? `${score}%` : "—"}
       </p>
 
       {pt.task_id && (
-        <p className="mt-1.5 font-mono text-[11px] truncate" style={{ color: "var(--muted-foreground)" }}>
+        <p className="mt-1 font-mono text-[10px] text-slate-500 truncate bg-slate-100 px-1 py-0.5 rounded">
           {pt.task_id}
         </p>
       )}
-      <p className="mt-1 text-[10px]" style={{ color: "var(--muted-foreground)" }}>
-        Click to pin details
+      <p className="mt-1 text-[10px] text-slate-400">
+        Click point to inspect
       </p>
     </div>
   );
@@ -59,38 +53,34 @@ function VerificationTooltip({ active, payload, label }) {
 
 /* ── Pinned detail panel ────────────────────────────────────────── */
 function VerificationDetail({ item, onClose }) {
-  const score    = item.rawScore;
+  const score = item.rawScore;
   const verified = item.verified === 1;
-  const color    = score == null ? "#64748b" : score >= 80 ? "#22c55e" : score >= 60 ? "#f59e0b" : "#ef4444";
+  const badgeBorder = verified ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800";
 
   return (
-    <div
-      className="rounded-xl border p-4 animate-fade-in"
-      style={{ background: color + "0d", borderColor: color + "40" }}
-    >
+    <div className={`rounded-xl border p-4 animate-fade-in ${badgeBorder}`}>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color }}>
-          Verification Detail
+        <p className="text-xs font-semibold uppercase tracking-wider">
+          Verification Inspection
         </p>
         <button
           onClick={onClose}
-          className="rounded-full p-1 transition-colors hover:bg-muted/60"
-          style={{ color: "var(--muted-foreground)" }}
+          className="rounded-md p-1 transition-colors hover:bg-black/5 text-slate-600"
         >
           <X size={14} />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 mb-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 mb-2">
         {[
-          { label: "Score",    value: score != null ? `${score} / 100` : "—", color },
-          { label: "Decision", value: verified ? "Approved" : "Rejected",     color: verified ? "#22c55e" : "#ef4444" },
-          { label: "Task ID",  value: item.task_id || "—", mono: true },
-          { label: "Date",     value: item.created_at ? new Date(item.created_at).toLocaleString() : "—" },
-        ].map(({ label, value, color: c, mono }) => (
-          <div key={label} className="rounded-lg border px-3 py-2" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-            <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "var(--muted-foreground)" }}>{label}</p>
-            <p className={`text-sm font-semibold truncate ${mono ? "font-mono text-[11px]" : ""}`} style={{ color: c || "var(--foreground)" }}>
+          { label: "Benchmark Score", value: score != null ? `${score} / 100` : "—" },
+          { label: "Status", value: verified ? "Approved" : "Rejected" },
+          { label: "Task ID", value: item.task_id || "—", mono: true },
+          { label: "Audit Date", value: item.created_at ? new Date(item.created_at).toLocaleDateString() : "—" },
+        ].map(({ label, value, mono }) => (
+          <div key={label} className="rounded-lg border border-slate-200/80 bg-white p-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">{label}</p>
+            <p className={`text-xs font-semibold text-slate-900 truncate ${mono ? "font-mono text-[11px]" : ""}`}>
               {value}
             </p>
           </div>
@@ -98,9 +88,9 @@ function VerificationDetail({ item, onClose }) {
       </div>
 
       {item.feedback && (
-        <div className="rounded-lg border px-3 py-2.5" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-          <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "var(--muted-foreground)" }}>Feedback</p>
-          <p className="text-xs leading-5" style={{ color: "var(--foreground)" }}>{item.feedback}</p>
+        <div className="rounded-lg border border-slate-200/80 bg-white p-3 mt-2">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Verifier Remarks</p>
+          <p className="text-xs text-slate-700 leading-relaxed">{item.feedback}</p>
         </div>
       )}
     </div>
@@ -113,7 +103,6 @@ function VerificationTrendChart({ verifications = [], className = "" }) {
 
   const data = useMemo(() => buildVerificationTrend(verifications), [verifications]);
 
-  // Avg computed only over entries that actually have a score
   const avgScore = useMemo(() => {
     const scored = data.filter((d) => d.rawScore != null);
     if (!scored.length) return null;
@@ -127,23 +116,23 @@ function VerificationTrendChart({ verifications = [], className = "" }) {
   };
 
   return (
-    <Card className={`transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${className}`}>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-3">
+    <Card className={`border border-slate-200/80 bg-white shadow-xs ${className}`}>
+      <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <CardTitle>Verification Trend</CardTitle>
-            <CardDescription>Verifier scores across recent tasks</CardDescription>
+            <CardTitle className="text-sm font-semibold text-slate-900">Verification Quality Trend</CardTitle>
+            <CardDescription className="text-xs text-slate-500">Verifier scores across chronological tasks</CardDescription>
           </div>
           {avgScore != null ? (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-right shrink-0">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Avg Score</p>
-              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-300">{avgScore}%</p>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-right shrink-0">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-700">Avg Score</p>
+              <p className="text-base font-bold text-emerald-800">{avgScore}%</p>
             </div>
           ) : null}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-4">
         <div className="h-64">
           {!data.length ? (
             <EmptyState title="No verification scores yet" description="Scores appear after verifier runs." />
@@ -153,29 +142,29 @@ function VerificationTrendChart({ verifications = [], className = "" }) {
                 data={data}
                 onClick={handleChartClick}
                 style={{ cursor: "pointer" }}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="vtGradScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"  stopColor="#22c55e" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0.03} />
+                    <stop offset="0%" stopColor="#16a34a" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#16a34a" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
 
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
 
                 {/* Pass threshold line at 80 */}
                 <ReferenceLine
                   y={80}
-                  stroke="#22c55e"
+                  stroke="#16a34a"
                   strokeDasharray="4 3"
-                  strokeOpacity={0.4}
-                  label={{ value: "Pass (80)", position: "insideTopRight", fontSize: 10, fill: "#22c55e", fillOpacity: 0.6 }}
+                  strokeOpacity={0.6}
+                  label={{ value: "Pass Threshold (80%)", position: "insideTopRight", fontSize: 10, fill: "#16a34a" }}
                 />
 
                 <XAxis
                   dataKey="name"
                   tick={({ x, y, payload }) => {
-                    // Find the data point to get the readable label
                     const pt = data.find((d) => d.name === payload.value);
                     return (
                       <text
@@ -183,7 +172,7 @@ function VerificationTrendChart({ verifications = [], className = "" }) {
                         y={y + 10}
                         textAnchor={data.length > 7 ? "end" : "middle"}
                         fontSize={10}
-                        fill="var(--muted-foreground)"
+                        fill="#64748B"
                         transform={data.length > 7 ? `rotate(-30, ${x}, ${y + 10})` : undefined}
                       >
                         {pt?.label ?? payload.value}
@@ -197,7 +186,7 @@ function VerificationTrendChart({ verifications = [], className = "" }) {
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 11, fill: "#64748B" }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v) => `${v}%`}
@@ -206,11 +195,10 @@ function VerificationTrendChart({ verifications = [], className = "" }) {
 
                 <Tooltip content={<VerificationTooltip />} />
 
-                {/* Highlight selected point by unique name key */}
                 {selectedPoint && (
                   <ReferenceLine
                     x={selectedPoint.name}
-                    stroke="#818cf8"
+                    stroke="#2563eb"
                     strokeWidth={1.5}
                     strokeDasharray="3 3"
                   />
@@ -220,34 +208,33 @@ function VerificationTrendChart({ verifications = [], className = "" }) {
                   type="monotone"
                   dataKey="score"
                   name="Verification Score"
-                  stroke="#22c55e"
+                  stroke="#16a34a"
                   fill="url(#vtGradScore)"
-                  strokeWidth={2.5}
+                  strokeWidth={2}
                   connectNulls={false}
                   dot={(props) => {
                     const { cx, cy, payload } = props;
-                    if (payload?.score == null) return null; // don't render dot for null scores
+                    if (payload?.score == null) return null;
                     const isSelected = selectedPoint?.name === payload?.name;
                     const s = payload?.rawScore;
                     const dotColor = s == null ? "#64748b"
-                      : s >= 80 ? "#22c55e"
-                      : s >= 60 ? "#f59e0b"
-                      : "#ef4444";
+                      : s >= 80 ? "#16a34a"
+                      : s >= 60 ? "#d97706"
+                      : "#e11d48";
                     return (
                       <circle
                         key={payload?.name}
                         cx={cx}
                         cy={cy}
-                        r={isSelected ? 6 : 4}
+                        r={isSelected ? 5.5 : 3.5}
                         fill={dotColor}
-                        stroke={isSelected ? "#fff" : "transparent"}
-                        strokeWidth={isSelected ? 2 : 0}
-                        style={{ filter: isSelected ? "drop-shadow(0 0 4px rgba(99,102,241,0.7))" : "none" }}
+                        stroke="#ffffff"
+                        strokeWidth={isSelected ? 2 : 1}
                       />
                     );
                   }}
-                  activeDot={{ r: 6, fill: "#22c55e", stroke: "#fff", strokeWidth: 2 }}
-                  animationDuration={800}
+                  activeDot={{ r: 5, fill: "#16a34a", stroke: "#ffffff", strokeWidth: 2 }}
+                  animationDuration={700}
                 />
               </AreaChart>
             </ResponsiveContainer>

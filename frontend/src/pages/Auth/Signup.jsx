@@ -5,8 +5,6 @@ import {
   ShieldCheck, CheckCircle, Circle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { buttonVariants } from "../../components/ui/button";
-import { cn } from "../../lib/utils";
 
 function getStrength(pw) {
   if (!pw) return 0;
@@ -18,98 +16,154 @@ function getStrength(pw) {
   return s;
 }
 const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
-const strengthColors = ["", "#EF4444", "#F59E0B", "#10B981", "#059669"];
+const strengthColors = ["", "#ef4444", "#f59e0b", "#10b981", "#059669"];
 
 function Signup() {
   const { signup } = useAuth();
-  const navigate   = useNavigate();
-  const [form, setForm] = useState({ name:"", email:"", password:"", confirmPassword:"", role:"Operator", organization:"" });
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", role: "Operator", organization: "" });
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState(null);
-  const set = field => e => setForm(p => ({ ...p, [field]: e.target.value }));
+  const [error, setError] = useState(null);
+  const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
   const strength = useMemo(() => getStrength(form.password), [form.password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) { setError("Passwords do not match."); return; }
     setLoading(true); setError(null);
-    try { await signup({ name: form.name, email: form.email, password: form.password, role: form.role, organization: form.organization }); navigate("/", { replace: true }); }
-    catch (err) { setError(err?.message || "Unable to create account."); }
-    finally { setLoading(false); }
+    try {
+      await signup({ name: form.name, email: form.email, password: form.password, role: form.role, organization: form.organization });
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err?.message || "Unable to create operator account.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const checks = [
-    { label: "8+ characters", ok: form.password.length >= 8 },
-    { label: "Uppercase letter", ok: /[A-Z]/.test(form.password) },
+    { label: "8+ chars", ok: form.password.length >= 8 },
+    { label: "Uppercase", ok: /[A-Z]/.test(form.password) },
     { label: "Number", ok: /[0-9]/.test(form.password) },
   ];
 
-  const Field = ({ id, label, icon: Icon, ...props }) => (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#94A3B8" }}>{label}</label>
-      <div className="relative">
-        {Icon && <Icon size={13} className="absolute top-1/2 left-3.5 -translate-y-1/2" style={{ color: "#CBD5E1" }} />}
-        <input id={id} className={`ai-input w-full h-10 ${Icon ? "pl-10" : "pl-3.5"} pr-4`} {...props} />
-      </div>
-    </div>
-  );
-
   return (
-    <div className="auth-card w-full max-w-lg p-8 relative overflow-hidden">
-      <div className="absolute top-0 left-[10%] right-[10%] h-0.5 rounded-full"
-        style={{ background: "linear-gradient(90deg, transparent, #2563EB, #06B6D4, transparent)" }} />
-
+    <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-xs relative">
+      {/* Header */}
       <div className="mb-6 text-center">
         <div className="mb-4 inline-flex">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl relative"
-            style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", boxShadow: "0 8px 24px rgba(37,99,235,0.3)" }}>
-            <ShieldCheck size={22} className="text-white" />
-            <div className="absolute top-1 left-1 right-1 h-5 rounded-xl opacity-20"
-              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.8), transparent)" }} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-xs text-white">
+            <ShieldCheck size={24} />
           </div>
         </div>
-        <h1 className="text-2xl font-bold mb-1" style={{ color: "#0F172A" }}>Create your account</h1>
-        <p className="text-sm" style={{ color: "#64748B" }}>Join the Trust A2A agent network</p>
+        <h1 className="text-xl font-bold tracking-tight text-slate-900">Register Operator Account</h1>
+        <p className="text-xs text-slate-500 mt-1">Join the Trust A2A multi-agent network</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Field id="name"         label="Full Name"     icon={UserRound} value={form.name}         onChange={set("name")}         placeholder="Your full name" required />
-        <Field id="signup-email" label="Email Address" icon={Mail}      value={form.email}        onChange={set("email")}        placeholder="you@company.com" type="email" autoComplete="email" required />
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        <div className="space-y-1">
+          <label htmlFor="name" className="text-xs font-semibold text-slate-700">Full Name</label>
+          <div className="relative">
+            <UserRound size={13} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+            <input
+              id="name"
+              type="text"
+              required
+              className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={form.name}
+              onChange={set("name")}
+              placeholder="Alex Walker"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="signup-email" className="text-xs font-semibold text-slate-700">Email Address</label>
+          <div className="relative">
+            <Mail size={13} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+            <input
+              id="signup-email"
+              type="email"
+              required
+              autoComplete="email"
+              className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={form.email}
+              onChange={set("email")}
+              placeholder="alex@company.com"
+            />
+          </div>
+        </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field id="role"         label="Role"         value={form.role}         onChange={set("role")}         placeholder="Operator" />
-          <Field id="organization" label="Organization" icon={Building2} value={form.organization} onChange={set("organization")} placeholder="Company name" />
+          <div className="space-y-1">
+            <label htmlFor="role" className="text-xs font-semibold text-slate-700">Role</label>
+            <input
+              id="role"
+              className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={form.role}
+              onChange={set("role")}
+              placeholder="Platform Operator"
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="organization" className="text-xs font-semibold text-slate-700">Organization</label>
+            <div className="relative">
+              <Building2 size={13} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+              <input
+                id="organization"
+                className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={form.organization}
+                onChange={set("organization")}
+                placeholder="Trust Labs"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Password */}
-        <div className="space-y-1.5">
-          <label htmlFor="signup-pw" className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#94A3B8" }}>Password</label>
+        <div className="space-y-1">
+          <label htmlFor="signup-pw" className="text-xs font-semibold text-slate-700">Password</label>
           <div className="relative">
-            <Lock size={13} className="absolute top-1/2 left-3.5 -translate-y-1/2" style={{ color: "#CBD5E1" }} />
-            <input id="signup-pw" type={showPw ? "text" : "password"} required autoComplete="new-password"
-              className="ai-input w-full h-10 pl-10 pr-11"
-              value={form.password} onChange={set("password")} placeholder="Min. 8 characters" />
-            <button type="button" onClick={() => setShowPw(v => !v)}
-              className="absolute top-1/2 right-3.5 -translate-y-1/2 transition-colors hover:text-slate-500"
-              style={{ color: "#CBD5E1" }}>
-              {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+            <Lock size={13} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+            <input
+              id="signup-pw"
+              type={showPw ? "text" : "password"}
+              required
+              autoComplete="new-password"
+              className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-9 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={form.password}
+              onChange={set("password")}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
             </button>
           </div>
           {form.password.length > 0 && (
-            <div className="space-y-1.5 animate-fade-in">
+            <div className="space-y-1 pt-1">
               <div className="flex gap-1">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="h-1 flex-1 rounded-full transition-all duration-300"
-                    style={{ background: i <= strength ? strengthColors[strength] : "#E2E8F0" }} />
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="h-1 flex-1 rounded-full transition-all duration-300"
+                    style={{ background: i <= strength ? strengthColors[strength] : "#e2e8f0" }}
+                  />
                 ))}
               </div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold" style={{ color: strengthColors[strength] }}>{strengthLabels[strength]}</p>
-                <div className="flex gap-3">
-                  {checks.map(c => (
-                    <span key={c.label} className={`flex items-center gap-1 text-[11px] font-medium ${c.ok ? "text-emerald-600" : "text-slate-400"}`}>
-                      {c.ok ? <CheckCircle size={10} /> : <Circle size={10} />}{c.label}
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-semibold" style={{ color: strengthColors[strength] }}>
+                  {strengthLabels[strength]}
+                </span>
+                <div className="flex gap-2">
+                  {checks.map((c) => (
+                    <span key={c.label} className={`flex items-center gap-0.5 ${c.ok ? "text-emerald-600 font-medium" : "text-slate-400"}`}>
+                      {c.ok ? <CheckCircle size={10} /> : <Circle size={10} />}
+                      {c.label}
                     </span>
                   ))}
                 </div>
@@ -118,29 +172,46 @@ function Signup() {
           )}
         </div>
 
-        <Field id="confirm-pw" label="Confirm Password" icon={Lock} value={form.confirmPassword} onChange={set("confirmPassword")} placeholder="Repeat password" type={showPw ? "text" : "password"} required />
+        <div className="space-y-1">
+          <label htmlFor="confirm-pw" className="text-xs font-semibold text-slate-700">Confirm Password</label>
+          <div className="relative">
+            <Lock size={13} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+            <input
+              id="confirm-pw"
+              type={showPw ? "text" : "password"}
+              required
+              className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={form.confirmPassword}
+              onChange={set("confirmPassword")}
+              placeholder="••••••••"
+            />
+          </div>
+        </div>
 
         {error && (
-          <div className="animate-fade-in rounded-xl px-3.5 py-2.5 text-sm"
-            style={{ background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626" }}>
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
             {error}
           </div>
         )}
 
-        <button type="submit" disabled={loading}
-          className="w-full flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}
-          onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(37,99,235,0.4)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-          onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)"; e.currentTarget.style.transform = ""; }}>
-          {loading
-            ? <><span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />Creating account…</>
-            : <><UserPlus size={14} />Create Account</>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-blue-600 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors disabled:opacity-60 mt-2"
+        >
+          {loading ? (
+            <>Creating account...</>
+          ) : (
+            <><UserPlus size={13} /> Complete Registration</>
+          )}
         </button>
       </form>
 
-      <p className="mt-5 text-center text-sm" style={{ color: "#94A3B8" }}>
-        Already have an account?{" "}
-        <Link to="/login" className="font-semibold" style={{ color: "#2563EB" }}>Log in →</Link>
+      <p className="mt-5 text-center text-xs text-slate-500">
+        Already registered?{" "}
+        <Link to="/login" className="font-semibold text-blue-600 hover:underline">
+          Sign In
+        </Link>
       </p>
     </div>
   );

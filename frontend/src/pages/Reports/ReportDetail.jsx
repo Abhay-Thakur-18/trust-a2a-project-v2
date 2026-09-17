@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Copy, Download, IndianRupee, Loader2, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, Copy, Download, IndianRupee, Loader2, UserRound, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { getTaskById } from "../../services/taskService";
 import { formatCurrency } from "../../lib/formatters";
@@ -9,7 +9,6 @@ import FeedbackPanel from "../../components/shared/FeedbackPanel";
 import StatusBadge from "../../components/shared/StatusBadge";
 import MarkdownRenderer from "../../components/shared/MarkdownRenderer";
 import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { EmptyState, ErrorState, LoadingSkeleton } from "../../components/shared/DataState";
 
@@ -60,66 +59,92 @@ function ReportDetail() {
     return <EmptyState title="No report content" description="This task does not have a generated report yet." />;
   }
 
+  const isVerified = Number(task.verification_score ?? 80) >= 80;
+
   return (
     <div className="min-h-[60vh] space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="outline" size="sm" render={<Link to="/reports" />}>
+      {/* ── Top Action & Navigation Bar ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        <Link
+          to="/reports"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
+        >
           <ArrowLeft size={14} />
           Back to Reports
-        </Button>
+        </Link>
         <div className="flex items-center gap-2">
           {loading ? (
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 size={12} className="animate-spin" />
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+              <Loader2 size={13} className="animate-spin text-blue-600" />
               Syncing
             </span>
           ) : null}
-          <Button variant="outline" size="sm" onClick={handleCopy}>
-            <Copy size={14} />
-            Copy
+          <Button variant="outline" size="sm" onClick={handleCopy} className="h-8 text-xs font-semibold border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
+            <Copy size={13} className="mr-1.5" />
+            Copy Markdown
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDownload}>
-            <Download size={14} />
-            Download
+          <Button variant="outline" size="sm" onClick={handleDownload} className="h-8 text-xs font-semibold border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
+            <Download size={13} className="mr-1.5" />
+            Export (.md)
           </Button>
         </div>
       </div>
 
-      <Card className="glass-panel overflow-hidden">
-        <CardHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-transparent to-sky-500/10">
+      {/* ── Main Report Card & Intelligence Layout ── */}
+      <Card className="border border-slate-200 bg-white shadow-xs overflow-hidden">
+        {/* Document Header */}
+        <CardHeader className="border-b border-slate-200 bg-slate-50/60 p-6 md:p-8 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">Report Detail</Badge>
+            <span className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700">
+              AI Deliverable Document
+            </span>
             <StatusBadge status={task.status} />
-            {task.verification_score != null ? <Badge variant="outline">Score {task.verification_score}/100</Badge> : null}
+            {task.verification_score != null && (
+              <span className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-bold ${
+                isVerified
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-rose-50 text-rose-800 border-rose-200"
+              }`}>
+                <CheckCircle2 size={13} /> Verifier Score {task.verification_score}/100
+              </span>
+            )}
           </div>
-          <CardTitle className="mt-3 text-2xl leading-tight md:text-3xl">{task.task}</CardTitle>
-          <p className="font-mono text-xs text-muted-foreground">{task.task_id}</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {task.worker_id ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-1">
-                <UserRound size={12} />
+
+          <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
+            {task.task}
+          </CardTitle>
+
+          {/* Metadata Row */}
+          <div className="flex flex-wrap gap-2.5 text-xs text-slate-600 pt-1">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1 font-mono text-slate-500">
+              ID: {task.task_id}
+            </span>
+            {task.worker_id && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1">
+                <UserRound size={13} className="text-slate-400" />
                 {task.worker_id}
               </span>
-            ) : null}
-            {task.reward != null ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-1">
-                <IndianRupee size={12} />
-                {formatCurrency(task.reward)}
+            )}
+            {task.reward != null && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1 font-bold text-slate-900">
+                <IndianRupee size={13} className="text-slate-400" />
+                {formatCurrency(task.reward)} Escrow
               </span>
-            ) : null}
-            {task.created_at ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-1">
-                <CalendarDays size={12} />
+            )}
+            {task.created_at && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1">
+                <CalendarDays size={13} className="text-slate-400" />
                 {task.created_at.slice(0, 10)}
               </span>
-            ) : null}
+            )}
           </div>
         </CardHeader>
 
-        <CardContent className="grid gap-6 p-0 xl:grid-cols-[240px_minmax(0,1fr)_360px]">
-          <aside className="border-b border-border/60 p-5 xl:sticky xl:top-0 xl:h-fit xl:self-start xl:border-b-0 xl:border-r">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Contents</p>
-            <nav className="mt-3 space-y-2">
+        <CardContent className="grid gap-0 p-0 xl:grid-cols-[240px_minmax(0,1fr)_340px]">
+          {/* Table of Contents */}
+          <aside className="border-b border-slate-200 bg-slate-50/40 p-6 xl:sticky xl:top-0 xl:h-fit xl:self-start xl:border-b-0 xl:border-r">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Document Sections</p>
+            <nav className="mt-3 space-y-1">
               {sections.map((section, index) => (
                 <button
                   key={`${section.title}-${index}`}
@@ -127,40 +152,43 @@ function ReportDetail() {
                   onClick={() => {
                     document.getElementById(`section-${index}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
-                  className="block w-full rounded-lg border border-transparent px-3 py-2 text-left text-sm text-muted-foreground transition hover:border-border/60 hover:bg-muted/40 hover:text-foreground"
+                  className="block w-full rounded-lg px-2.5 py-2 text-left text-xs text-slate-600 transition hover:bg-white hover:text-slate-900 hover:shadow-2xs font-medium"
                 >
+                  <span className="mr-1.5 text-slate-400 font-bold">{index + 1}.</span>
                   {section.title}
                 </button>
               ))}
             </nav>
           </aside>
 
-          <article className="min-w-0 space-y-5 p-5">
+          {/* Section Content */}
+          <article className="min-w-0 space-y-6 p-6 sm:p-8 bg-white">
             {sections.map((section, index) => (
               <section
                 key={`${section.title}-${index}`}
                 id={`section-${index}`}
-                className="report-section rounded-2xl border border-border/60 bg-background/80 overflow-hidden shadow-sm"
+                className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs"
               >
                 {/* Section header */}
-                <div className="flex items-center gap-3 border-b border-border/40 bg-muted/30 px-5 py-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/70 px-5 py-3">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 border border-blue-100">
                     {index + 1}
                   </span>
-                  <h2 className="text-base font-semibold text-primary">{section.title}</h2>
+                  <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">{section.title}</h2>
                 </div>
 
-                <div className="p-5">
+                <div className="p-5 text-sm leading-relaxed text-slate-800">
                   <MarkdownRenderer content={section.content} />
                 </div>
               </section>
             ))}
           </article>
 
-          <aside className="border-t border-border/60 p-5 xl:sticky xl:top-0 xl:h-fit xl:self-start xl:border-t-0 xl:border-l">
+          {/* Verification Audit Sidebar */}
+          <aside className="border-t border-slate-200 bg-slate-50/30 p-6 xl:sticky xl:top-0 xl:h-fit xl:self-start xl:border-t-0 xl:border-l">
             <FeedbackPanel
               verification={{
-                verified: Number(task.verification_score || 0) >= 80,
+                verified: isVerified,
                 score: task.verification_score,
                 feedback: task.verification_feedback,
                 task_id: task.task_id,

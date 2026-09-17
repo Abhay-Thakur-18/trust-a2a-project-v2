@@ -1,79 +1,48 @@
 import { useEffect, useState } from "react";
 import {
   Bell, Database, LayoutGrid, Moon, Save,
-  ShieldAlert, Sun, Trash2, Webhook, Eye, EyeOff, Copy, Check,
-  Accessibility, Type, Keyboard, Clock, Activity, Lock,
+  ShieldAlert, Sun, Trash2, Webhook,
+  Accessibility, Type, Keyboard, Clock, Activity, Lock, UserRound,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { useProfile } from "../../context/ProfileContext";
-import PageHeader from "../../components/shared/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
 import { resetPlatform } from "../../services/taskService";
 import { SERVICE_URLS } from "../../services/api";
 
 const TABS = [
-  { id: "general",       label: "General",       icon: LayoutGrid    },
-  { id: "notifications", label: "Notifications", icon: Bell          },
-  { id: "platform",      label: "Platform",      icon: Database      },
-  { id: "security",      label: "Security",      icon: ShieldAlert   },
-  { id: "accessibility", label: "Accessibility", icon: Accessibility },
-  { id: "danger",        label: "Danger Zone",   icon: Trash2        },
+  { id: "account", label: "Account", icon: UserRound },
+  { id: "authentication", label: "Authentication & Security", icon: ShieldAlert },
+  { id: "services", label: "Services & Topology", icon: Database },
+  { id: "application", label: "Application Preferences", icon: LayoutGrid },
+  { id: "danger", label: "Danger Zone", icon: Trash2 },
 ];
 
 function ToggleRow({ label, description, checked, onChange }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border/60 bg-muted/10 p-4 transition-all hover:bg-muted/25 hover:border-primary/20">
+    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-slate-200/80 bg-slate-50/40 p-3.5 transition-all hover:bg-slate-50 hover:border-slate-300">
       <div>
-        <p className="text-sm font-medium">{label}</p>
-        {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
+        <p className="text-xs font-semibold text-slate-900">{label}</p>
+        {description && <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">{description}</p>}
       </div>
       <div
         onClick={() => onChange(!checked)}
-        className={`relative mt-0.5 h-5 w-9 rounded-full transition-all duration-200 cursor-pointer shrink-0 ${checked ? "bg-primary" : "bg-muted"}`}
+        className={`relative mt-0.5 h-5 w-9 rounded-full transition-all duration-200 cursor-pointer shrink-0 ${checked ? "bg-blue-600" : "bg-slate-200"}`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${checked ? "translate-x-4" : "translate-x-0"}`}
+          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${checked ? "translate-x-4" : "translate-x-0"}`}
         />
       </div>
     </label>
   );
 }
 
-function CopyableKey({ label, value, masked = true }) {
-  const [show, setShow] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>
-      <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
-        <code className="flex-1 truncate font-mono text-xs text-foreground">
-          {masked && !show ? value.replace(/./g, "•").slice(0, 32) + "••••" : value}
-        </code>
-        {masked && (
-          <button onClick={() => setShow(v => !v)} className="text-muted-foreground hover:text-foreground transition-colors">
-            {show ? <EyeOff size={13} /> : <Eye size={13} />}
-          </button>
-        )}
-        <button onClick={copy} className="text-muted-foreground hover:text-primary transition-colors">
-          {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function Settings() {
   const { theme, setTheme } = useTheme();
   const { preferences, updatePreferences } = useProfile();
-  const [tab, setTab] = useState("general");
+  const [tab, setTab] = useState("account");
   const [form, setForm] = useState(preferences);
   const [saved, setSaved] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -107,204 +76,106 @@ function Settings() {
     }
   };
 
-  const tabBtnStyle = (id) =>
-    tab === id
-      ? { background: "linear-gradient(135deg, oklch(0.55 0.25 264), oklch(0.52 0.22 290))", color: "white", boxShadow: "0 4px 12px oklch(0.55 0.25 264 / 30%)" }
-      : {};
-
   return (
-    <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Settings" description="Workspace preferences, notifications, security, platform controls, and data management." />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Settings</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Configure system endpoints, notification alerts, session policies, and platform data governance.
+          </p>
+        </div>
+      </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 border-b border-slate-200 pb-3">
         {TABS.map((item) => {
           const Icon = item.icon;
+          const isActive = tab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setTab(item.id)}
-              className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-medium transition-all duration-200 ${tab === item.id ? "border-transparent" : "border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/40"}`}
-              style={tabBtnStyle(item.id)}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                isActive
+                  ? "bg-slate-900 text-white shadow-2xs font-semibold"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
             >
-              <Icon size={13} />
+              <Icon size={14} />
               {item.label}
             </button>
           );
         })}
       </div>
 
-      {/* ── GENERAL ── */}
-      {tab === "general" && (
+      {/* ── ACCOUNT ── */}
+      {tab === "account" && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>Choose how the dashboard looks.</CardDescription>
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900">Workspace & Identity</CardTitle>
+              <CardDescription className="text-xs text-slate-500">Configure organization details and currency</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                {[
-                  { val: "light", icon: Sun, label: "Light" },
-                  { val: "dark",  icon: Moon, label: "Dark"  },
-                ].map(({ val, icon: Icon, label }) => (
-                  <button
-                    key={val}
-                    onClick={() => setTheme(val)}
-                    className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${theme === val ? "border-transparent text-white" : "border-border/60 text-muted-foreground hover:text-foreground"}`}
-                    style={theme === val ? { background: "linear-gradient(135deg, oklch(0.55 0.25 264), oklch(0.52 0.22 290))", boxShadow: "0 4px 12px oklch(0.55 0.25 264 / 30%)" } : {}}
-                  >
-                    <Icon size={14} />
-                    {label}
-                  </button>
-                ))}
+            <CardContent className="space-y-3 pt-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Workspace Label</label>
+                <Input className="h-9 text-xs" value={form.workspaceName} onChange={(e) => setForm({ ...form, workspaceName: e.target.value })} placeholder="Trust A2A Control Center" />
               </div>
-              <ToggleRow label="Compact tables" description="Denser row spacing on data tables." checked={form.compactTables} onChange={(v) => setForm({ ...form, compactTables: v })} />
-              <ToggleRow label="Auto refresh dashboard" description="Refresh KPIs every 30 seconds." checked={form.autoRefresh} onChange={(v) => setForm({ ...form, autoRefresh: v })} />
-            </CardContent>
-          </Card>
-
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>Workspace</CardTitle>
-              <CardDescription>Customize your control center label.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Workspace name</label>
-                <Input className="rounded-xl" value={form.workspaceName} onChange={(e) => setForm({ ...form, workspaceName: e.target.value })} placeholder="Trust A2A Control Center" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Default currency</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Reporting Currency</label>
                 <select
-                  className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
+                  className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800"
                   value={form.currency || "USD"}
                   onChange={(e) => setForm({ ...form, currency: e.target.value })}
                 >
                   <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
                   <option value="INR">INR (₹)</option>
+                  <option value="EUR">EUR (€)</option>
                   <option value="GBP">GBP (£)</option>
                 </select>
               </div>
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all"
-                style={{ background: "linear-gradient(135deg, oklch(0.55 0.25 264), oklch(0.52 0.22 290))", boxShadow: "0 4px 12px oklch(0.55 0.25 264 / 30%)" }}
-              >
-                <Save size={14} />
+              <Button onClick={handleSave} size="sm" className="h-8 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">
+                <Save size={13} className="mr-1" />
                 {saved ? "Saved ✓" : "Save Preferences"}
-              </button>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900">Notification Alerts</CardTitle>
+              <CardDescription className="text-xs text-slate-500">Channels for real-time task and escrow updates</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <ToggleRow label="Email Critical Alerts" description="Forward high-priority escrow release notifications." checked={form.emailAlerts} onChange={(v) => setForm({ ...form, emailAlerts: v })} />
+              <ToggleRow label="Task Lifecycle Updates" description="Notify on dispatch and completion events." checked={form.taskUpdates} onChange={(v) => setForm({ ...form, taskUpdates: v })} />
+              <ToggleRow label="Escrow Settlement Alerts" description="Real-time alerts on vault locks and payout executions." checked={form.escrowAlerts} onChange={(v) => setForm({ ...form, escrowAlerts: v })} />
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* ── NOTIFICATIONS ── */}
-      {tab === "notifications" && (
-        <Card className="glass-panel">
-          <CardHeader>
-            <CardTitle>Notification Settings</CardTitle>
-            <CardDescription>Configure alerts for task, escrow, and verification events.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ToggleRow label="Email alerts" description="Receive critical platform alerts by email." checked={form.emailAlerts} onChange={(v) => setForm({ ...form, emailAlerts: v })} />
-            <ToggleRow label="Task lifecycle updates" description="Notify when tasks move through stages." checked={form.taskUpdates} onChange={(v) => setForm({ ...form, taskUpdates: v })} />
-            <ToggleRow label="Escrow settlement alerts" description="Notify on fund lock, release, and blocked payments." checked={form.escrowAlerts} onChange={(v) => setForm({ ...form, escrowAlerts: v })} />
-            <ToggleRow label="Verification failures" description="Immediate alert when a task fails verification." checked={form.verifyAlerts ?? true} onChange={(v) => setForm({ ...form, verifyAlerts: v })} />
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Alert email</label>
-                <Input type="email" className="rounded-xl" value={form.alertEmail} onChange={(e) => setForm({ ...form, alertEmail: e.target.value })} placeholder="ops@trusta2a.com" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Webhook URL</label>
-                <div className="relative">
-                  <Webhook size={14} className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" />
-                  <Input className="pl-9 rounded-xl" value={form.webhookUrl} onChange={(e) => setForm({ ...form, webhookUrl: e.target.value })} placeholder="https://hooks.example.com/events" />
-                </div>
-              </div>
-            </div>
-            <button onClick={handleSave} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all" style={{ background: "linear-gradient(135deg, oklch(0.55 0.25 264), oklch(0.52 0.22 290))", boxShadow: "0 4px 12px oklch(0.55 0.25 264 / 30%)" }}>
-              <Save size={14} />
-              {saved ? "Saved ✓" : "Save Notifications"}
-            </button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── PLATFORM ── */}
-      {tab === "platform" && (
+      {/* ── AUTHENTICATION ── */}
+      {tab === "authentication" && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>Service Endpoints</CardTitle>
-              <CardDescription>Connected microservices for the Trust A2A pipeline.</CardDescription>
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <Lock size={14} className="text-slate-500" /> Session Security
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">Operator authentication policies</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {[
-                { name: "Client Agent",   url: SERVICE_URLS.client,   color: "oklch(0.65 0.25 264)" },
-                { name: "Worker Agent",   url: SERVICE_URLS.worker,   color: "oklch(0.65 0.2 195)"  },
-                { name: "Verifier Agent", url: SERVICE_URLS.verifier, color: "oklch(0.65 0.18 150)" },
-                { name: "Escrow Service", url: SERVICE_URLS.escrow,   color: "oklch(0.7 0.2 310)"   },
-              ].map(({ name, url, color }) => (
-                <div key={name} className="flex items-center justify-between rounded-xl border border-border/60 px-3 py-2.5 hover:bg-muted/20 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
-                    <span className="text-sm font-medium">{name}</span>
-                  </div>
-                  <Badge variant="outline" className="font-mono text-[11px]">{url}</Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>Platform Status</CardTitle>
-              <CardDescription>Runtime environment information.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {[
-                { label: "Dashboard version", value: <Badge>v2.0</Badge> },
-                { label: "Pipeline mode",     value: <Badge variant="outline">Lock → Execute → Release</Badge> },
-                { label: "Table density",     value: <span>{preferences.compactTables ? "Compact" : "Comfortable"}</span> },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between rounded-xl border border-border/60 px-3 py-2.5">
-                  <span className="text-muted-foreground">{label}</span>
-                  {value}
-                </div>
-              ))}
-              <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/8 px-3 py-2.5">
-                <span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-                  <span className="relative flex h-2 w-2">
-                    <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                  </span>
-                  Agents
-                </span>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-300">Operational</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* ── SECURITY ── */}
-      {tab === "security" && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Lock size={16} /> Session Security</CardTitle>
-              <CardDescription>Control authentication and session behavior.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ToggleRow label="Two-Factor Authentication" description="Add an extra layer of security (UI preview)." checked={twoFA} onChange={setTwoFA} />
-              <ToggleRow label="Login alerts" description="Receive an email on new sign-in." checked={loginAlerts} onChange={setLoginAlerts} />
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium flex items-center gap-2"><Clock size={13} /> Session timeout</label>
+            <CardContent className="space-y-3 pt-4">
+              <ToggleRow label="Two-Factor Authentication" description="Require authenticator OTP for critical escrow actions." checked={twoFA} onChange={setTwoFA} />
+              <ToggleRow label="Sign-In Alerts" description="Email operator whenever a new session is established." checked={loginAlerts} onChange={setLoginAlerts} />
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Clock size={12} /> Idle Session Timeout
+                </label>
                 <select
-                  className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
+                  className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800"
                   value={sessionTimeout}
                   onChange={(e) => setSessionTimeout(e.target.value)}
                 >
@@ -312,37 +183,39 @@ function Settings() {
                   <option value="30">30 minutes</option>
                   <option value="60">1 hour</option>
                   <option value="240">4 hours</option>
-                  <option value="never">Never</option>
+                  <option value="never">Never expire</option>
                 </select>
               </div>
-              <button onClick={handleSave} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all" style={{ background: "linear-gradient(135deg, oklch(0.55 0.25 264), oklch(0.52 0.22 290))", boxShadow: "0 4px 12px oklch(0.55 0.25 264 / 30%)" }}>
-                <Save size={14} />
+              <Button onClick={handleSave} size="sm" className="h-8 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">
+                <Save size={13} className="mr-1" />
                 Save Security Settings
-              </button>
+              </Button>
             </CardContent>
           </Card>
 
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Activity size={16} /> Recent Activity</CardTitle>
-              <CardDescription>Last sign-in events for your account.</CardDescription>
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <Activity size={14} className="text-slate-500" /> Authentication Audit
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">Recent operator access logs</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 pt-4">
               {[
-                { event: "Login via Email",  time: "Just now",   device: "Windows · Chrome",  status: "success" },
-                { event: "Login via Email",  time: "2 days ago", device: "Windows · Chrome",  status: "success" },
-                { event: "Failed attempt",   time: "5 days ago", device: "Unknown",            status: "error"   },
+                { event: "Operator Session Active", time: "Just now", device: "Browser UI · Localhost", status: "success" },
+                { event: "API Token Verified", time: "1 hour ago", device: "Client Agent Orchestrator", status: "success" },
+                { event: "Escrow Settlement Authorized", time: "3 hours ago", device: "Gemini Verifier Node", status: "success" },
               ].map((log, i) => (
-                <div key={i} className="flex items-start justify-between rounded-xl border border-border/50 px-3 py-2.5 text-sm hover:bg-muted/20 transition-colors">
+                <div key={i} className="flex items-start justify-between rounded-lg border border-slate-200/70 bg-slate-50/40 px-3 py-2 text-xs">
                   <div>
-                    <p className="font-medium">{log.event}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{log.device}</p>
+                    <p className="font-semibold text-slate-800">{log.event}</p>
+                    <p className="text-[11px] text-slate-500">{log.device}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`text-xs font-semibold ${log.status === "success" ? "text-emerald-500" : "text-destructive"}`}>
-                      {log.status === "success" ? "✓ Success" : "✗ Failed"}
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      ✓ Success
                     </span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{log.time}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{log.time}</p>
                   </div>
                 </div>
               ))}
@@ -351,61 +224,119 @@ function Settings() {
         </div>
       )}
 
-
-
-      {/* ── ACCESSIBILITY ── */}
-      {tab === "accessibility" && (
+      {/* ── SERVICES ── */}
+      {tab === "services" && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Type size={16} /> Display</CardTitle>
-              <CardDescription>Adjust visual display for comfort and readability.</CardDescription>
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900">Microservice Topology</CardTitle>
+              <CardDescription className="text-xs text-slate-500">Connected network services for Trust A2A</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Font size: {fontSize}%</label>
-                <input
-                  type="range"
-                  min={80}
-                  max={130}
-                  step={5}
-                  value={fontSize}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setFontSize(v);
-                    document.documentElement.style.fontSize = `${v}%`;
-                  }}
-                  className="w-full accent-primary"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Small (80%)</span><span>Default (100%)</span><span>Large (130%)</span>
+            <CardContent className="space-y-2 pt-4">
+              {[
+                { name: "Client Orchestrator", url: SERVICE_URLS.client, port: "8000" },
+                { name: "Gemini Worker Agent", url: SERVICE_URLS.worker, port: "8001" },
+                { name: "Gemini Verifier Agent", url: SERVICE_URLS.verifier, port: "8002" },
+                { name: "Escrow Ledger Vault", url: SERVICE_URLS.escrow, port: "8003" },
+              ].map(({ name, url, port }) => (
+                <div key={name} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/40 px-3 py-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="font-semibold text-slate-800">{name}</span>
+                    <span className="text-slate-400 font-mono">(:{port})</span>
+                  </div>
+                  <span className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded truncate max-w-[200px]">
+                    {url}
+                  </span>
                 </div>
-              </div>
-              <ToggleRow label="Reduce motion" description="Disable animations for accessibility." checked={reducedMotion} onChange={(v) => { setReducedMotion(v); document.documentElement.classList.toggle("reduce-motion", v); }} />
-              <ToggleRow label="High contrast mode" description="Increase text/background contrast." checked={highContrast} onChange={setHighContrast} />
+              ))}
             </CardContent>
           </Card>
 
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Keyboard size={16} /> Keyboard Shortcuts</CardTitle>
-              <CardDescription>Available keyboard shortcuts in the dashboard.</CardDescription>
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900">Runtime Architecture</CardTitle>
+              <CardDescription className="text-xs text-slate-500">Deployment and environment state</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
+            <CardContent className="space-y-2 pt-4 text-xs">
+              {[
+                { label: "Platform Version", value: "v2.0 (Enterprise B2B)" },
+                { label: "Protocol Pipeline", value: "Escrow Lock → Worker Execute → Verifier Audit → Payout" },
+                { label: "AI Engine", value: "Google Gemini 2.5 Multi-Agent" },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/40 px-3 py-2">
+                  <span className="text-slate-500">{label}</span>
+                  <span className="font-semibold text-slate-900">{value}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+                <span className="font-semibold text-emerald-800 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Autonomous Mesh
+                </span>
+                <span className="font-bold text-emerald-800">Operational</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── APPLICATION ── */}
+      {tab === "application" && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900">Appearance & Theme</CardTitle>
+              <CardDescription className="text-xs text-slate-500">Configure visual layout preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <div className="flex gap-2">
                 {[
-                  { keys: ["G", "D"], desc: "Go to Dashboard" },
-                  { keys: ["G", "T"], desc: "Go to Tasks"     },
-                  { keys: ["G", "R"], desc: "Go to Reports"   },
-                  { keys: ["G", "S"], desc: "Go to Settings"  },
-                  { keys: ["Ctrl", "K"], desc: "Open search"  },
-                  { keys: ["Ctrl", "/"], desc: "Show shortcuts" },
+                  { val: "light", icon: Sun, label: "Light (Default)" },
+                  { val: "dark", icon: Moon, label: "Dark" },
+                ].map(({ val, icon: Icon, label }) => (
+                  <button
+                    key={val}
+                    onClick={() => setTheme(val)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                      theme === val
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Icon size={13} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <ToggleRow label="Compact Table View" description="Use tighter padding for dense data inspection." checked={form.compactTables} onChange={(v) => setForm({ ...form, compactTables: v })} />
+              <ToggleRow label="Auto Refresh Dashboard" description="Poll microservices every 30 seconds for live updates." checked={form.autoRefresh} onChange={(v) => setForm({ ...form, autoRefresh: v })} />
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <Keyboard size={14} className="text-slate-500" /> Hotkeys & Navigation
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">Standard operational shortcuts</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="space-y-1.5 text-xs">
+                {[
+                  { keys: ["G", "D"], desc: "Navigate to Dashboard" },
+                  { keys: ["G", "T"], desc: "Navigate to Tasks" },
+                  { keys: ["G", "R"], desc: "Navigate to Reports" },
+                  { keys: ["G", "S"], desc: "Navigate to Settings" },
+                  { keys: ["Ctrl", "K"], desc: "Focus Global Search" },
                 ].map(({ keys, desc }) => (
-                  <div key={desc} className="flex items-center justify-between rounded-xl border border-border/50 px-3 py-2 text-sm">
-                    <span className="text-muted-foreground">{desc}</span>
+                  <div key={desc} className="flex items-center justify-between rounded-lg border border-slate-200/70 bg-slate-50/40 px-3 py-2">
+                    <span className="text-slate-600">{desc}</span>
                     <div className="flex items-center gap-1">
                       {keys.map((k) => (
-                        <kbd key={k} className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-xs font-semibold">{k}</kbd>
+                        <kbd key={k} className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-700 shadow-2xs">
+                          {k}
+                        </kbd>
                       ))}
                     </div>
                   </div>
@@ -418,28 +349,33 @@ function Settings() {
 
       {/* ── DANGER ZONE ── */}
       {tab === "danger" && (
-        <Card className="glass-panel border-destructive/30">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2"><Trash2 size={16} /> Reset Platform Data</CardTitle>
-            <CardDescription>Clear all tasks, escrow transactions, verifications, and reputation to start from zero. This action cannot be undone.</CardDescription>
+        <Card className="border border-rose-200 bg-white shadow-xs">
+          <CardHeader className="pb-3 border-b border-rose-100 bg-rose-50/50">
+            <CardTitle className="text-sm font-semibold text-rose-800 flex items-center gap-1.5">
+              <Trash2 size={14} /> Reset Platform Ledger
+            </CardTitle>
+            <CardDescription className="text-xs text-rose-600">
+              Purge all tasks, escrow transactions, verifications, and reputation scores to start from zero.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive/80">
-              ⚠ This will permanently delete all tasks, transactions, verifications, and reputation data from the database.
+          <CardContent className="space-y-3 pt-4">
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800 leading-relaxed">
+              ⚠️ Warning: This action will truncate all records from the database across client-agent, worker-agent, verifier-agent, and escrow-service.
             </div>
-            <button
+            <Button
               onClick={handleReset}
               disabled={resetting}
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all disabled:opacity-60"
-              style={{ background: "oklch(0.58 0.24 27)", boxShadow: "0 4px 12px oklch(0.58 0.24 27 / 30%)" }}
+              variant="destructive"
+              size="sm"
+              className="h-8 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white"
             >
               {resetting ? (
-                <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />Resetting…</>
+                <>Resetting Database…</>
               ) : (
-                <><Trash2 size={14} />Reset All Data</>
+                <><Trash2 size={13} className="mr-1" /> Reset All Platform Data</>
               )}
-            </button>
-            {resetMessage && <p className="text-sm text-muted-foreground">{resetMessage}</p>}
+            </Button>
+            {resetMessage && <p className="text-xs font-medium text-slate-700">{resetMessage}</p>}
           </CardContent>
         </Card>
       )}

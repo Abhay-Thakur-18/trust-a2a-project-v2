@@ -6,17 +6,14 @@ import { Outlet } from "react-router-dom";
 
 function MainLayout() {
   return (
-    <div className="app-shell flex min-h-screen">
+    <div className="app-shell flex min-h-screen bg-slate-50/50">
       <ScrollToTop />
-      <div className="dot-grid" />
-      <div className="mesh-gradient" />
-
       <div className="relative z-10 flex min-h-screen flex-1">
         <Sidebar />
         <div className="flex min-h-0 flex-1 flex-col">
           <Navbar />
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 md:p-7 lg:p-8">
-            <div className="mx-auto w-full max-w-[1600px]">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 md:p-8 lg:p-10">
+            <div className="mx-auto w-full max-w-[1500px]">
               <Outlet />
             </div>
           </main>

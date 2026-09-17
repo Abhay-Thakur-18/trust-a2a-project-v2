@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Moon, Settings, Sun, UserRound } from "lucide-react";
+import { LogOut, Settings, UserRound, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
-import { useTheme } from "../../context/ThemeContext";
 import { useProfile } from "../../context/ProfileContext";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../lib/utils";
@@ -11,7 +9,6 @@ import { cn } from "../../lib/utils";
 function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
-  const { theme, toggleTheme } = useTheme();
   const { profile } = useProfile();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -50,81 +47,66 @@ function ProfileMenu() {
 
   return (
     <div ref={rootRef} className="relative">
-      <Button
+      <button
         type="button"
-        variant="ghost"
-        className="h-auto rounded-xl px-2 py-1.5 hover:bg-muted/60"
+        className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100 transition-colors focus:outline-none"
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((value) => !value)}
       >
-        <div className="flex items-center gap-2">
-          <Avatar size="sm" className="ring-2 ring-primary/20">
-            {profile.picture ? <AvatarImage src={profile.picture} alt={profile.name} /> : null}
-            <AvatarFallback>{profile.avatarInitials || "AT"}</AvatarFallback>
-          </Avatar>
-          <div className="hidden text-left md:block">
-            <p className="text-xs font-medium">{profile.name}</p>
-            <p className="text-[11px] text-muted-foreground">{profile.role}</p>
-          </div>
+        <Avatar size="sm" className="h-7 w-7 ring-1 ring-slate-200">
+          {profile.picture ? <AvatarImage src={profile.picture} alt={profile.name} /> : null}
+          <AvatarFallback className="bg-blue-50 text-xs font-semibold text-blue-700">
+            {profile.avatarInitials || "OP"}
+          </AvatarFallback>
+        </Avatar>
+        <div className="hidden text-left sm:block">
+          <p className="text-xs font-medium text-slate-800 leading-tight">{profile.name || "Operator"}</p>
+          <p className="text-[10px] text-slate-500 leading-tight">{profile.role || "Admin"}</p>
         </div>
-      </Button>
+        <ChevronDown size={12} className="text-slate-400 hidden sm:block" />
+      </button>
 
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-56 overflow-hidden rounded-xl border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-xl"
+          className="absolute right-0 top-[calc(100%+0.375rem)] z-50 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 text-slate-800 shadow-lg animate-fade-in"
         >
-          <div className="border-b border-border/60 px-3 py-2.5">
-            <p className="text-sm font-medium">{profile.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
+          <div className="border-b border-slate-100 px-3 py-2">
+            <p className="text-xs font-semibold text-slate-900 truncate">{profile.name || "Operator"}</p>
+            <p className="truncate text-[11px] text-slate-500">{profile.email || "operator@trusta2a.network"}</p>
           </div>
 
           <div className="py-1">
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-muted"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
               onClick={() => closeAndNavigate("/profile")}
             >
-              <UserRound size={14} />
-              Profile
+              <UserRound size={13} className="text-slate-400" />
+              Profile Settings
             </button>
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-muted"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
               onClick={() => closeAndNavigate("/settings")}
             >
-              <Settings size={14} />
-              Settings
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-muted"
-              onClick={() => {
-                setOpen(false);
-                toggleTheme();
-              }}
-            >
-              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
-              {theme === "dark" ? "Light mode" : "Dark mode"}
+              <Settings size={13} className="text-slate-400" />
+              Workspace Preferences
             </button>
           </div>
 
-          <div className="border-t border-border/60 pt-1">
+          <div className="border-t border-slate-100 pt-1">
             <button
               type="button"
               role="menuitem"
-              className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive transition",
-                "hover:bg-destructive/10",
-              )}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors"
               onClick={handleLogout}
             >
-              <LogOut size={14} />
-              Logout
+              <LogOut size={13} className="text-red-500" />
+              Sign Out
             </button>
           </div>
         </div>

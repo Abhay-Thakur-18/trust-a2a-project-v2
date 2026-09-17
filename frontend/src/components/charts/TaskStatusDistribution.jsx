@@ -9,12 +9,12 @@ function TaskStatusDistribution({ tasks = [], className = "" }) {
   const total = tasks.length;
 
   return (
-    <Card className={`transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${className}`}>
-      <CardHeader className="pb-2">
-        <CardTitle>Task Status Distribution</CardTitle>
-        <CardDescription>Live breakdown of all tasks in the pipeline</CardDescription>
+    <Card className={`border border-slate-200/80 bg-white shadow-xs ${className}`}>
+      <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+        <CardTitle className="text-sm font-semibold text-slate-900">Task Status Distribution</CardTitle>
+        <CardDescription className="text-xs text-slate-500">Live breakdown of all tasks in the pipeline</CardDescription>
       </CardHeader>
-      <CardContent className="h-80">
+      <CardContent className="h-80 pt-4">
         {!data.length ? (
           <EmptyState title="No task data yet" description="Create a task to populate this chart." />
         ) : (
@@ -27,37 +27,37 @@ function TaskStatusDistribution({ tasks = [], className = "" }) {
                     dataKey="value"
                     nameKey="name"
                     innerRadius={62}
-                    outerRadius={92}
+                    outerRadius={90}
                     paddingAngle={3}
-                    animationDuration={900}
-                    animationBegin={120}
+                    animationDuration={800}
+                    animationBegin={100}
                   >
                     {data.map((entry) => (
-                      <Cell key={entry.key} fill={entry.fill} stroke="transparent" />
+                      <Cell key={entry.key} fill={entry.fill} stroke="#ffffff" strokeWidth={2} />
                     ))}
                   </Pie>
                   <Tooltip content={<ChartTooltip valueFormatter={(v) => `${v} tasks`} />} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-3xl font-semibold tracking-tight">{total}</p>
-                <p className="text-xs text-muted-foreground">Total Tasks</p>
+                <p className="text-2xl font-bold tracking-tight text-slate-900 leading-none">{total}</p>
+                <p className="text-[11px] font-medium text-slate-500 mt-1">Total Tasks</p>
               </div>
             </div>
 
-            <div className="flex flex-col justify-center gap-2">
+            <div className="flex flex-col justify-center gap-1.5 overflow-y-auto max-h-[260px] pr-1">
               {data.map((item) => (
                 <div
                   key={item.key}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+                  className="flex items-center justify-between rounded-lg border border-slate-200/70 bg-slate-50/50 px-3 py-1.5 text-xs transition-colors hover:bg-slate-100/70"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.fill }} />
-                    <span>{item.name}</span>
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.fill }} />
+                    <span className="font-medium text-slate-700">{item.name}</span>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{item.value}</p>
-                    <p className="text-[11px] text-muted-foreground">{item.pct}%</p>
+                    <span className="font-bold text-slate-900">{item.value}</span>
+                    <span className="ml-1.5 text-[10px] text-slate-400">({item.pct}%)</span>
                   </div>
                 </div>
               ))}

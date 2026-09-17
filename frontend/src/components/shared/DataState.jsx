@@ -1,37 +1,56 @@
-import { AlertTriangle, Inbox } from "lucide-react";
+import { AlertCircle, Inbox, RefreshCw } from "lucide-react";
+import { Button } from "../ui/button";
 
 export function LoadingSkeleton({ rows = 4 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 animate-pulse">
+      <div className="h-6 w-1/4 rounded-md bg-slate-200/70" />
       {Array.from({ length: rows }).map((_, idx) => (
-        <div key={idx} className="h-10 animate-pulse rounded-lg bg-muted/60" />
+        <div key={idx} className="h-12 w-full rounded-lg bg-slate-100/80 border border-slate-200/50" />
       ))}
     </div>
   );
 }
 
-export function EmptyState({ title = "No records found", description = "Data will appear when available." }) {
+export function EmptyState({
+  title = "No data available",
+  description = "New records will be logged automatically once agents execute tasks.",
+  action,
+}) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 p-6 text-center">
-      <Inbox className="mb-2 text-muted-foreground" size={18} />
-      <p className="text-sm font-medium">{title}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+    <div className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
+        <Inbox size={20} />
+      </div>
+      <p className="text-sm font-semibold text-slate-800">{title}</p>
+      <p className="mt-1 text-xs text-slate-500 max-w-sm">{description}</p>
+      {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );
 }
 
-export function ErrorState({ title = "Unable to load data", onRetry }) {
+export function ErrorState({
+  title = "Unable to load data from microservices",
+  description = "Please ensure backend services and database are reachable.",
+  onRetry,
+}) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
-      <AlertTriangle className="mb-2 text-destructive" size={18} />
-      <p className="text-sm font-medium">{title}</p>
+    <div className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-red-200 bg-red-50/50 p-6 text-center">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 text-red-600 mb-2.5">
+        <AlertCircle size={18} />
+      </div>
+      <p className="text-sm font-semibold text-red-900">{title}</p>
+      <p className="mt-1 text-xs text-red-600 max-w-md">{description}</p>
       {onRetry ? (
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onRetry}
-          className="mt-3 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+          className="mt-3.5 h-8 gap-1.5 rounded-lg border-red-200 bg-white text-xs text-red-700 hover:bg-red-50"
         >
-          Retry
-        </button>
+          <RefreshCw size={12} />
+          Retry Request
+        </Button>
       ) : null}
     </div>
   );
