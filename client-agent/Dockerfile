@@ -4,10 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir -r client-agent/requirements.txt
- 
-ENV PYTHONPATH=/app
+RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app/client-agent
+ENV PYTHONPATH=/app
 
 CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
