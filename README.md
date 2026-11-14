@@ -1,4 +1,4 @@
-# Trust-Based A2A Multi-Agent Collaboration Platform
+# Trust-Based A2A Multi-Agent Collaboration Platform.
 
 A production-ready multi-agent collaboration platform built with **FastAPI, React, PostgreSQL, Docker, and Google Gemini**. The system enables secure task execution through independent verification, escrow-controlled payments, and a modular microservices architecture.
 
